@@ -46,6 +46,10 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         return response()->json($nodeApi->getHealth());
     })->name('api.status');
 
+    Route::get('discord-stats', function () {
+        return view('admin.discord-stats');
+    })->name('discord.stats');
+
 });
 
 // Profile routes (Breeze)

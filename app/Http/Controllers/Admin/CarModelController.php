@@ -3,19 +3,19 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Car;
+use App\Models\CarModel;
 use App\Models\Brand;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
-class CarController extends Controller
+class CarModelController extends Controller
 {
     /**
      * Affichage de la liste des modèles
      */
     public function index(Request $request)
     {
-        $query = Car::with('brand');
+        $query = CarModel::with('brand');
 
         // Recherche
         if ($request->filled('search')) {
@@ -110,7 +110,7 @@ class CarController extends Controller
         ]);
 
         // Vérifier les doublons
-        $exists = Car::where('name', $validated['name'])
+        $exists = CarModel::where('name', $validated['name'])
                           ->where('brand_id', $validated['brand_id'])
                           ->exists();
 
@@ -120,7 +120,7 @@ class CarController extends Controller
                 ->withErrors(['name' => 'Ce modèle existe déjà pour cette marque.']);
         }
 
-        Car::create($validated);
+        CarModel::create($validated);
 
         return redirect()
             ->route('admin.models.index')
@@ -130,7 +130,7 @@ class CarController extends Controller
     /**
      * Affichage d'un modèle spécifique
      */
-    public function show(Car $model)
+    public function show(CarModel $model)
     {
         $model->load('brand');
 
@@ -140,7 +140,7 @@ class CarController extends Controller
     /**
      * Formulaire d'édition
      */
-    public function edit(Car $model)
+    public function edit(CarModel $model)
     {
         $brands = Brand::orderBy('name')->get();
         $difficulties = [
@@ -155,7 +155,7 @@ class CarController extends Controller
     /**
      * Mise à jour d'un modèle
      */
-    public function update(Request $request, Car $model)
+    public function update(Request $request, CarModel $model)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -175,7 +175,7 @@ class CarController extends Controller
         ]);
 
         // Vérifier les doublons (sauf le modèle actuel)
-        $exists = Car::where('name', $validated['name'])
+        $exists = CarModel::where('name', $validated['name'])
                           ->where('brand_id', $validated['brand_id'])
                           ->where('id', '!=', $model->id)
                           ->exists();
@@ -196,7 +196,7 @@ class CarController extends Controller
     /**
      * Suppression d'un modèle
      */
-    public function destroy(Car $model)
+    public function destroy(CarModel $model)
     {
         $model->delete();
 
@@ -210,7 +210,7 @@ class CarController extends Controller
      */
     public function getByBrand(Request $request, $brandId)
     {
-        $models = Car::where('brand_id', $brandId)
+        $models = CarModel::where('brand_id', $brandId)
                           ->orderBy('name')
                           ->get(['id', 'name']);
 

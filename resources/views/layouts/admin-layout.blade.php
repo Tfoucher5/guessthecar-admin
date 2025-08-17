@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>GuessTheCar - Admin</title>
+    <title>{{ config('app.name', 'Car Guesser') }} - Administration</title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -82,7 +82,7 @@
                     style="width: 40px; height: 40px; font-size: 1.5rem;">
                     🚗
                 </div>
-                GuessTheCar - Admin
+                Car Guesser Admin
             </a>
 
             <!-- Toggle button for mobile -->
@@ -135,6 +135,13 @@
 
                 <!-- User dropdown and API status -->
                 <ul class="navbar-nav">
+                    <!-- API Status -->
+                    <li class="nav-item me-3">
+                        <span id="api-status" class="badge bg-warning">
+                            <i class="bi bi-arrow-clockwise"></i> Vérification...
+                        </span>
+                    </li>
+
                     <!-- User Dropdown -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button"
@@ -188,6 +195,23 @@
 
     <!-- Custom JS -->
     <script>
+        // API Status Check
+        document.addEventListener('DOMContentLoaded', function () {
+            const statusElement = document.getElementById('api-status');
+
+            fetch('/admin/api-status')
+                .then(response => response.json())
+                .then(data => {
+                    const isHealthy = data.status === 'healthy';
+                    statusElement.className = `badge ${isHealthy ? 'bg-success' : 'bg-danger'}`;
+                    statusElement.innerHTML = `<i class="bi bi-${isHealthy ? 'check-circle' : 'x-circle'}"></i> API ${isHealthy ? 'OK' : 'KO'}`;
+                })
+                .catch(() => {
+                    statusElement.className = 'badge bg-danger';
+                    statusElement.innerHTML = '<i class="bi bi-x-circle"></i> API KO';
+                });
+        });
+
         // Auto-hide alerts after 5 seconds
         setTimeout(function () {
             const alerts = document.querySelectorAll('.alert-auto-hide');
