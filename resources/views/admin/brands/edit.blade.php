@@ -98,9 +98,11 @@
                                 </h6>
                                 <div id="logo-preview">
                                     <div class="d-flex align-items-center">
+                                        <!-- Image du logo -->
                                         <img id="preview-image" src="{{ $brand->logo_url }}"
                                             alt="Prévisualisation du logo" class="rounded me-3"
                                             style="width: 60px; height: 60px; object-fit: contain; {{ $brand->logo_url ? '' : 'display: none;' }}">
+
                                         <div>
                                             <h5 id="preview-name" class="mb-1">{{ $brand->name }}</h5>
                                             <small id="preview-details" class="text-muted">
@@ -191,41 +193,62 @@
             const logoUrl = document.getElementById('logo_url').value;
             const foundedYear = document.getElementById('founded_year').value;
 
-            const previewImageContainer = document.getElementById('preview-image-container');
+            // CORRECTION : Référencer les bons éléments
             const previewImage = document.getElementById('preview-image');
             const fallbackLogo = document.getElementById('fallback-logo');
             const previewName = document.getElementById('preview-name');
             const previewDetails = document.getElementById('preview-details');
 
+            // Mise à jour du nom
             previewName.textContent = name || 'Nom de la marque';
-            fallbackLogo.textContent = name ? name.charAt(0).toUpperCase() : 'M';
 
+            // Mise à jour des détails
             let details = [];
             if (country) details.push(country);
             if (foundedYear) details.push(`Fondée en ${foundedYear}`);
             previewDetails.textContent = details.join(' • ');
 
-            if (logoUrl) {
+            // CORRECTION : Gestion de l'affichage image/fallback
+            if (logoUrl && logoUrl.trim() !== '') {
+                console.log('Chargement de l\'image:', logoUrl); // Debug
+
+                // Afficher l'image, masquer le fallback
                 previewImage.src = logoUrl;
-                previewImageContainer.style.display = 'block';
+                previewImage.style.display = 'block';
                 fallbackLogo.style.display = 'none';
+
+                // Gérer l'erreur de chargement
+                previewImage.onload = function () {
+                    console.log('Image chargée avec succès'); // Debug
+                };
+
                 previewImage.onerror = function () {
-                    previewImageContainer.style.display = 'none';
+                    console.log('Erreur de chargement de l\'image'); // Debug
+                    // En cas d'erreur, afficher le fallback
+                    previewImage.style.display = 'none';
                     fallbackLogo.style.display = 'flex';
                 };
             } else {
-                previewImageContainer.style.display = 'none';
+                // Pas d'URL, afficher le fallback
+                previewImage.style.display = 'none';
                 fallbackLogo.style.display = 'flex';
             }
         }
 
         // Écouter les changements sur tous les champs
-        document.getElementById('name').addEventListener('input', updatePreview);
-        document.getElementById('country').addEventListener('input', updatePreview);
-        document.getElementById('logo_url').addEventListener('input', updatePreview);
-        document.getElementById('founded_year').addEventListener('input', updatePreview);
+        document.addEventListener('DOMContentLoaded', function () {
+            const nameField = document.getElementById('name');
+            const countryField = document.getElementById('country');
+            const logoField = document.getElementById('logo_url');
+            const foundedField = document.getElementById('founded_year');
 
-        // Prévisualisation initiale
-        updatePreview();
+            if (nameField) nameField.addEventListener('input', updatePreview);
+            if (countryField) countryField.addEventListener('input', updatePreview);
+            if (logoField) logoField.addEventListener('input', updatePreview);
+            if (foundedField) foundedField.addEventListener('input', updatePreview);
+
+            // Prévisualisation initiale
+            updatePreview();
+        });
     </script>
 </x-admin-layout>
