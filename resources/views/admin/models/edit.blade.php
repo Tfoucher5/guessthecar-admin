@@ -150,11 +150,6 @@
                                                     alt="Prévisualisation"
                                                     style="width: 100%; height: 100%; object-fit: contain; object-position: center; border-radius: 4px;">
                                             </div>
-                                            <div id="preview-placeholder"
-                                                class="bg-secondary text-white rounded d-flex align-items-center justify-content-center mx-auto"
-                                                style="width: 120px; height: 120px; font-size: 2rem; {{ $model->image_url ? 'display: none;' : '' }}">
-                                                <i class="bi bi-car-front"></i>
-                                            </div>
                                         </div>
                                         <div class="col-md-9">
                                             <h5 id="preview-name" class="mb-2">{{ $model->name }}</h5>

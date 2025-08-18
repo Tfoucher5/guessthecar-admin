@@ -101,11 +101,6 @@
                                         <img id="preview-image" src="{{ $brand->logo_url }}"
                                             alt="Prévisualisation du logo" class="rounded me-3"
                                             style="width: 60px; height: 60px; object-fit: contain; {{ $brand->logo_url ? '' : 'display: none;' }}">
-                                        <div class="bg-primary text-white rounded d-flex align-items-center justify-content-center me-3"
-                                            id="fallback-logo"
-                                            style="width: 60px; height: 60px; font-size: 1.5rem; {{ $brand->logo_url ? 'display: none;' : '' }}">
-                                            {{ substr($brand->name, 0, 1) }}
-                                        </div>
                                         <div>
                                             <h5 id="preview-name" class="mb-1">{{ $brand->name }}</h5>
                                             <small id="preview-details" class="text-muted">
