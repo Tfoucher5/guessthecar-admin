@@ -65,4 +65,31 @@ class DashboardController extends Controller
             'apiHealth'
         ));
     }
+
+    public function apiStatus()
+    {
+        try {
+            $response = \Http::timeout(10)->get('http://localhost:3000/api/health');
+
+            if ($response->successful()) {
+                $data = $response->json();
+                return response()->json([
+                    'status' => 'healthy',
+                    'data' => $data,
+                    'timestamp' => now()
+                ]);
+            }
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'API not responding'
+            ], 503);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 503);
+        }
+    }
 }
