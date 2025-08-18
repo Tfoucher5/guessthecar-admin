@@ -1,132 +1,183 @@
 <x-admin-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
+        <div class="d-flex justify-content-between align-items-center">
             <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    ➕ Créer une nouvelle marque
-                </h2>
-                <p class="mt-1 text-sm text-gray-600">Ajoutez une nouvelle marque automobile à votre plateforme</p>
+                <h1 class="h3 mb-1 text-dark">
+                    <i class="bi bi-plus-circle me-2"></i>Nouvelle marque
+                </h1>
+                <p class="text-muted mb-0">Ajoutez une nouvelle marque automobile</p>
             </div>
-            <a href="{{ route('admin.brands.index') }}"
-                class="inline-flex items-center px-4 py-2 bg-gray-500 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-600 transition ease-in-out duration-150">
-                ← Retour à la liste
-            </a>
+            <div>
+                <a href="{{ route('admin.brands.index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Retour à la liste
+                </a>
+            </div>
         </div>
     </x-slot>
 
-    <div class="py-6">
-        <div class="max-w-2xl mx-auto">
-            <div class="bg-white shadow-sm rounded-lg overflow-hidden">
-                <form method="POST" action="{{ route('admin.brands.store') }}" class="space-y-6 p-6">
-                    @csrf
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-building me-2"></i>Informations de la marque
+            </h5>
+        </div>
+        <div class="card-body">
+            <form action="{{ route('admin.brands.store') }}" method="POST">
+                @csrf
 
+                <div class="row g-4">
                     <!-- Nom de la marque -->
-                    <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700">
-                            Nom de la marque *
+                    <div class="col-md-6">
+                        <label for="name" class="form-label">
+                            Nom de la marque <span class="text-danger">*</span>
                         </label>
-                        <input type="text" name="name" id="name" value="{{ old('name') }}" required
-                            placeholder="Ex: Toyota, BMW, Mercedes..."
-                            class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md @error('name') border-red-300 @enderror">
+                        <input type="text" class="form-control @error('name') is-invalid @enderror" id="name"
+                            name="name" value="{{ old('name') }}" placeholder="Ex: BMW, Mercedes-Benz..." required>
                         @error('name')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <!-- Pays -->
-                    <div>
-                        <label for="country" class="block text-sm font-medium text-gray-700">
-                            Pays d'origine
-                        </label>
-                        <input type="text" name="country" id="country" value="{{ old('country') }}"
-                            placeholder="Ex: Japon, Allemagne, France..."
-                            class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md @error('country') border-red-300 @enderror">
+                    <div class="col-md-6">
+                        <label for="country" class="form-label">Pays d'origine</label>
+                        <input type="text" class="form-control @error('country') is-invalid @enderror" id="country"
+                            name="country" value="{{ old('country') }}" placeholder="Ex: Allemagne, France, Japon...">
                         @error('country')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
+                    </div>
+
+                    <!-- URL du logo -->
+                    <div class="col-md-8">
+                        <label for="logo_url" class="form-label">URL du logo</label>
+                        <input type="url" class="form-control @error('logo_url') is-invalid @enderror" id="logo_url"
+                            name="logo_url" value="{{ old('logo_url') }}" placeholder="https://exemple.com/logo.png">
+                        @error('logo_url')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <div class="form-text">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Ajoutez l'URL d'une image pour le logo de la marque
+                        </div>
                     </div>
 
                     <!-- Année de fondation -->
-                    <div>
-                        <label for="founded_year" class="block text-sm font-medium text-gray-700">
-                            Année de fondation
-                        </label>
-                        <input type="number" name="founded_year" id="founded_year" value="{{ old('founded_year') }}"
-                            min="1800" max="{{ date('Y') }}" placeholder="Ex: 1937"
-                            class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md @error('founded_year') border-red-300 @enderror">
+                    <div class="col-md-4">
+                        <label for="founded_year" class="form-label">Année de fondation</label>
+                        <input type="number" class="form-control @error('founded_year') is-invalid @enderror"
+                            id="founded_year" name="founded_year" value="{{ old('founded_year') }}" min="1800"
+                            max="{{ date('Y') }}" placeholder="Ex: 1916">
                         @error('founded_year')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
-                    <!-- Informations supplémentaires -->
-                    <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <h3 class="text-sm font-medium text-blue-800">
-                                    Conseils pour une marque de qualité
-                                </h3>
-                                <div class="mt-2 text-sm text-blue-700">
-                                    <ul class="list-disc list-inside space-y-1">
-                                        <li>Utilisez le nom officiel de la marque</li>
-                                        <li>Vérifiez l'orthographe avant de valider</li>
-                                        <li>Les champs marqués d'un * sont obligatoires</li>
-                                    </ul>
+                    <!-- Prévisualisation du logo -->
+                    <div class="col-12">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="bi bi-eye me-2"></i>Prévisualisation
+                                </h6>
+                                <div id="logo-preview" class="d-none">
+                                    <div class="d-flex align-items-center">
+                                        <img id="preview-image" src="" alt="Prévisualisation du logo"
+                                            class="rounded me-3" style="width: 60px; height: 60px; object-fit: contain;">
+                                        <div>
+                                            <h5 id="preview-name" class="mb-1">Nom de la marque</h5>
+                                            <small id="preview-details" class="text-muted"></small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="no-preview" class="text-muted">
+                                    <i class="bi bi-image me-2"></i>
+                                    Remplissez les champs pour voir la prévisualisation
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Boutons d'action -->
-                    <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
-                        <a href="{{ route('admin.brands.index') }}"
-                            class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            Annuler
-                        </a>
-                        <button type="submit"
-                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            ✅ Créer la marque
-                        </button>
-                    </div>
-                </form>
-            </div>
+                <!-- Boutons d'action -->
+                <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+                    <a href="{{ route('admin.brands.index') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x me-2"></i>Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check me-2"></i>Créer la marque
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
     <script>
-        // Prévisualisation du logo
-        document.getElementById('logo_url').addEventListener('input', function () {
-            const url = this.value;
-            const preview = document.getElementById('logo-preview');
-            const image = document.getElementById('logo-image');
+        // Prévisualisation en temps réel
+        function updatePreview() {
+            const name = document.getElementById('name').value;
+            const country = document.getElementById('country').value;
+            const logoUrl = document.getElementById('logo_url').value;
+            const foundedYear = document.getElementById('founded_year').value;
 
-            if (url && isValidUrl(url)) {
-                image.src = url;
-                preview.classList.remove('hidden');
+            const previewDiv = document.getElementById('logo-preview');
+            const noPreviewDiv = document.getElementById('no-preview');
+            const previewImageContainer = document.getElementById('preview-image-container');
+            const previewImage = document.getElementById('preview-image');
+            const previewPlaceholder = document.getElementById('preview-placeholder');
+            const previewName = document.getElementById('preview-name');
+            const previewDetails = document.getElementById('preview-details');
 
-                image.onerror = function () {
-                    preview.classList.add('hidden');
-                };
+            console.log('updatePreview called', { name, logoUrl }); // Debug
+
+            if (name || logoUrl) {
+                previewDiv.classList.remove('d-none');
+                noPreviewDiv.classList.add('d-none');
+
+                previewName.textContent = name || 'Nom de la marque';
+                if (previewPlaceholder) {
+                    previewPlaceholder.textContent = name ? name.charAt(0).toUpperCase() : 'M';
+                }
+
+                let details = [];
+                if (country) details.push(country);
+                if (foundedYear) details.push(`Fondée en ${foundedYear}`);
+                previewDetails.textContent = details.join(' • ');
+
+                if (logoUrl) {
+                    console.log('Loading image:', logoUrl); // Debug
+                    previewImage.src = logoUrl;
+                    if (previewImageContainer) previewImageContainer.style.display = 'block';
+                    if (previewPlaceholder) previewPlaceholder.style.display = 'none';
+
+                    previewImage.onload = function () {
+                        console.log('Image loaded successfully'); // Debug
+                    };
+
+                    previewImage.onerror = function () {
+                        console.log('Image failed to load'); // Debug
+                        if (previewImageContainer) previewImageContainer.style.display = 'none';
+                        if (previewPlaceholder) previewPlaceholder.style.display = 'flex';
+                    };
+                } else {
+                    if (previewImageContainer) previewImageContainer.style.display = 'none';
+                    if (previewPlaceholder) previewPlaceholder.style.display = 'flex';
+                }
             } else {
-                preview.classList.add('hidden');
-            }
-        });
-
-        function isValidUrl(string) {
-            try {
-                new URL(string);
-                return true;
-            } catch (_) {
-                return false;
+                previewDiv.classList.add('d-none');
+                noPreviewDiv.classList.remove('d-none');
             }
         }
+
+        // Écouter les changements sur tous les champs
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('name').addEventListener('input', updatePreview);
+            document.getElementById('country').addEventListener('input', updatePreview);
+            document.getElementById('logo_url').addEventListener('input', updatePreview);
+            document.getElementById('founded_year').addEventListener('input', updatePreview);
+
+            // Prévisualisation initiale
+            updatePreview();
+        });
     </script>
 </x-admin-layout>

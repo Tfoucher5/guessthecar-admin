@@ -33,8 +33,11 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::resource('models', CarModelController::class);
 
     // Gestion des joueurs (lecture seule)
+    // Gestion des joueurs - AVEC édition
     Route::get('players', [PlayerController::class, 'index'])->name('players.index');
     Route::get('players/{userScore}', [PlayerController::class, 'show'])->name('players.show');
+    Route::get('players/{userScore}/edit', [PlayerController::class, 'edit'])->name('players.edit');
+    Route::put('players/{userScore}', [PlayerController::class, 'update'])->name('players.update');
 
     // Sessions de jeu
     Route::get('sessions', [PlayerController::class, 'sessions'])->name('sessions.index');

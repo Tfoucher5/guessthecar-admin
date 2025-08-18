@@ -8,9 +8,7 @@
                 <p class="text-muted mb-0">Analysez les parties jouées sur votre plateforme</p>
             </div>
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-primary" onclick="exportSessions()">
-                    <i class="bi bi-download me-2"></i>Exporter
-                </button>
+                <!-- BOUTON EXPORTER SUPPRIMÉ -->
                 <button class="btn btn-outline-info" onclick="refreshStats()">
                     <i class="bi bi-arrow-clockwise me-2"></i>Actualiser
                 </button>
@@ -32,12 +30,9 @@
                         <label for="status" class="form-label">Statut</label>
                         <select name="status" id="status" class="form-select">
                             <option value="">Tous les statuts</option>
-                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Terminées
-                            </option>
-                            <option value="abandoned" {{ request('status') == 'abandoned' ? 'selected' : '' }}>Abandonnées
-                            </option>
-                            <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>En
-                                cours</option>
+                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Terminées</option>
+                            <option value="abandoned" {{ request('status') == 'abandoned' ? 'selected' : '' }}>Abandonnées</option>
+                            <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>En cours</option>
                         </select>
                     </div>
 
@@ -106,7 +101,7 @@
                             $minutes = $avgDuration ? floor($avgDuration / 60) : 0;
                             $seconds = $avgDuration ? $avgDuration % 60 : 0;
                         @endphp
-                        <h4 class="mb-0">{{ sprintf('%02d:%02d', $minutes, $seconds) }}</h4>
+                        <h4 class="mb-0">{{ $minutes }}:{{ str_pad($seconds, 2, '0', STR_PAD_LEFT) }}</h4>
                         <small>Durée moyenne</small>
                     </div>
                 </div>
@@ -114,14 +109,9 @@
             <div class="col-md-3">
                 <div class="card bg-warning text-white">
                     <div class="card-body text-center">
-                        <i class="bi bi-graph-up fs-1 mb-2"></i>
-                        @php
-                            $total = $sessions->count();
-                            $completed = $sessions->where('completed', true)->count();
-                            $rate = $total > 0 ? round(($completed / $total) * 100) : 0;
-                        @endphp
-                        <h4 class="mb-0">{{ $rate }}%</h4>
-                        <small>Taux de réussite</small>
+                        <i class="bi bi-trophy fs-1 mb-2"></i>
+                        <h4 class="mb-0">{{ number_format($sessions->sum('points_earned') + $sessions->sum('difficulty_points_earned')) }}</h4>
+                        <small>Points totaux</small>
                     </div>
                 </div>
             </div>
@@ -132,8 +122,10 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">
-                Liste des sessions
-                <span class="badge bg-secondary">{{ isset($sessions) ? $sessions->total() : 0 }}</span>
+                Historique des sessions
+                @if(isset($sessions))
+                    <span class="badge bg-secondary">{{ $sessions->total() }}</span>
+                @endif
             </h5>
         </div>
         <div class="card-body p-0">
@@ -143,13 +135,13 @@
                         <thead>
                             <tr>
                                 <th>Joueur</th>
-                                <th>Voiture</th>
+                                <th>Véhicule</th>
                                 <th>Statut</th>
                                 <th>Durée</th>
                                 <th>Points</th>
                                 <th>Tentatives</th>
-                                <th>Démarré le</th>
-                                <th width="100">Actions</th>
+                                <th>Commencée le</th>
+                                <!-- COLONNE ACTIONS SUPPRIMÉE -->
                             </tr>
                         </thead>
                         <tbody>
@@ -158,24 +150,33 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3"
-                                                style="width: 32px; height: 32px; font-size: 0.8rem;">
-                                                {{ substr($session->userScore->username ?? 'U', 0, 1) }}
+                                                style="width: 32px; height: 32px; font-size: 0.9rem;">
+                                                {{ $session->userScore ? substr($session->userScore->username, 0, 1) : 'U' }}
                                             </div>
                                             <div>
-                                                <strong
-                                                    class="text-dark">{{ $session->userScore->username ?? 'Joueur supprimé' }}</strong>
+                                                <strong class="text-dark">{{ $session->userScore->username ?? 'Utilisateur inconnu' }}</strong>
                                                 <div class="text-muted small">ID: {{ $session->user_id }}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td>
-                                        <div>
-                                            <strong class="text-dark">{{ $session->carModel->brand->name ?? 'N/A' }}
-                                                {{ $session->carModel->name ?? 'N/A' }}</strong>
-                                            <div class="text-muted small">
-                                                @if($session->carModel)
-                                                    {{ $session->carModel->year ? $session->carModel->year : 'Année inconnue' }}
-                                                @endif
+                                        <div class="d-flex align-items-center">
+                                            @if($session->carModel && $session->carModel->image_url)
+                                                <div class="me-2" style="width: 40px; height: 40px; border: 1px solid #dee2e6; border-radius: 4px; background-color: #f8f9fa; padding: 2px; overflow: hidden; flex-shrink: 0;">
+                                                    <img src="{{ $session->carModel->image_url }}" 
+                                                         style="width: 100%; height: 100%; object-fit: contain; object-position: center;"
+                                                         alt="{{ $session->carModel->name }}"
+                                                         onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;background-color:#6c757d;color:white;display:flex;align-items:center;justify-content:center;border-radius:2px;font-size:1rem;\'><i class=\'bi bi-car-front\'></i></div>';">
+                                                </div>
+                                            @else
+                                                <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center me-2" 
+                                                     style="width: 40px; height: 40px; font-size: 1rem; flex-shrink: 0;">
+                                                    <i class="bi bi-car-front"></i>
+                                                </div>
+                                            @endif
+                                            <div>
+                                                <strong class="text-dark">{{ $session->carModel->name ?? 'Modèle inconnu' }}</strong>
+                                                <div class="text-muted small">{{ $session->carModel->brand->name ?? 'Marque inconnue' }}</div>
                                             </div>
                                         </div>
                                     </td>
@@ -184,23 +185,38 @@
                                             $statusConfig = [
                                                 'completed' => ['class' => 'bg-success', 'icon' => 'check-circle', 'text' => 'Terminée'],
                                                 'abandoned' => ['class' => 'bg-danger', 'icon' => 'x-circle', 'text' => 'Abandonnée'],
-                                                'in_progress' => ['class' => 'bg-primary', 'icon' => 'play-circle', 'text' => 'En cours'],
-                                                'timeout' => ['class' => 'bg-warning', 'icon' => 'clock', 'text' => 'Expirée']
+                                                'in_progress' => ['class' => 'bg-warning', 'icon' => 'clock', 'text' => 'En cours']
                                             ];
-                                            $status = $session->status ?? 'in_progress';
-                                            $config = $statusConfig[$status] ?? $statusConfig['in_progress'];
+                                            
+                                            if ($session->completed) {
+                                                $config = $statusConfig['completed'];
+                                            } elseif ($session->abandoned) {
+                                                $config = $statusConfig['abandoned'];
+                                            } else {
+                                                $config = $statusConfig['in_progress'];
+                                            }
                                         @endphp
                                         <span class="badge {{ $config['class'] }}">
                                             <i class="bi bi-{{ $config['icon'] }} me-1"></i>{{ $config['text'] }}
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="text-dark">{{ $session->formatted_duration ?? 'N/A' }}</span>
+                                        @if($session->duration_seconds)
+                                            @php
+                                                $minutes = floor($session->duration_seconds / 60);
+                                                $seconds = $session->duration_seconds % 60;
+                                            @endphp
+                                            <span class="text-dark">{{ $minutes }}:{{ str_pad($seconds, 2, '0', STR_PAD_LEFT) }}</span>
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
                                     </td>
                                     <td>
                                         <div>
-                                            <strong
-                                                class="text-primary">{{ number_format($session->total_points ?? 0, 0) }}</strong>
+                                            @php
+                                                $totalPoints = ($session->points_earned ?? 0) + ($session->difficulty_points_earned ?? 0);
+                                            @endphp
+                                            <strong class="text-primary">{{ number_format($totalPoints, 0) }}</strong>
                                         </div>
                                         <div class="text-muted small">
                                             Base: {{ number_format($session->points_earned ?? 0, 0) }}
@@ -209,22 +225,24 @@
                                     </td>
                                     <td>
                                         <div>
-                                            <strong class="text-dark">{{ $session->total_attempts ?? 0 }}</strong>
+                                            @php
+                                                $totalAttempts = ($session->attempts_make ?? 0) + ($session->attempts_model ?? 0);
+                                            @endphp
+                                            <strong class="text-dark">{{ $totalAttempts }}</strong>
                                         </div>
                                         <div class="text-muted small">
-                                            M: {{ $session->attempts_make ?? 0 }} | Mo: {{ $session->attempts_model ?? 0 }}
+                                            Marque: {{ $session->attempts_make ?? 0 }} | Modèle: {{ $session->attempts_model ?? 0 }}
                                         </div>
                                     </td>
                                     <td>
-                                        <span
-                                            class="text-muted small">{{ $session->started_at ? $session->started_at->format('d/m/Y H:i') : 'N/A' }}</span>
+                                        <span class="text-muted small">{{ $session->started_at ? $session->started_at->format('d/m/Y H:i') : 'N/A' }}</span>
+                                        @if($session->ended_at)
+                                            <div class="text-muted small">
+                                                Fin: {{ $session->ended_at->format('H:i') }}
+                                            </div>
+                                        @endif
                                     </td>
-                                    <td>
-                                        <a href="{{ route('admin.sessions.show', $session) }}"
-                                            class="btn btn-outline-info btn-sm" title="Voir détails">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                    </td>
+                                    <!-- PLUS DE COLONNE ACTIONS -->
                                 </tr>
                             @endforeach
                         </tbody>
@@ -260,12 +278,10 @@
     </div>
 
     <script>
-        function exportSessions() {
-            window.open('{{ route("admin.sessions.index") }}?export=csv', '_blank');
-        }
-
         function refreshStats() {
             location.reload();
         }
+
+        // FONCTION EXPORT SUPPRIMÉE
     </script>
 </x-admin-layout>

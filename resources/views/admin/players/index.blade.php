@@ -5,15 +5,26 @@
                 <h1 class="h3 mb-1 text-dark">
                     <i class="bi bi-people me-2"></i>Gestion des Joueurs
                 </h1>
-                <p class="text-muted mb-0">Consultez les statistiques des joueurs de votre plateforme</p>
+                <p class="text-muted mb-0">Consultez et modifiez les informations des joueurs de votre plateforme</p>
             </div>
-            <div class="d-flex gap-2">
-                <button class="btn btn-outline-primary" onclick="exportPlayers()">
-                    <i class="bi bi-download me-2"></i>Exporter
-                </button>
-            </div>
+            <!-- BOUTON EXPORTER SUPPRIMÉ -->
         </div>
     </x-slot>
+
+    <!-- Messages de succès/erreur -->
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>{{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
 
     <!-- Filtres -->
     <div class="card mb-4">
@@ -63,11 +74,12 @@
     </div>
 
     <!-- Statistiques rapides -->
-    @if($players->count() > 0)
+    @if(isset($players) && $players->count() > 0)
         <div class="row g-3 mb-4">
             <div class="col-md-3">
                 <div class="card bg-primary text-white">
                     <div class="card-body text-center">
+                        <i class="bi bi-people fs-1 mb-2"></i>
                         <h4 class="mb-0">{{ $players->total() }}</h4>
                         <small>Total joueurs</small>
                     </div>
@@ -76,29 +88,32 @@
             <div class="col-md-3">
                 <div class="card bg-success text-white">
                     <div class="card-body text-center">
-                        <h4 class="mb-0">{{ number_format($players->avg('total_points') ?? 0, 0) }}</h4>
-                        <small>Points moyens</small>
+                        <i class="bi bi-trophy fs-1 mb-2"></i>
+                        <h4 class="mb-0">{{ number_format($players->sum('total_points')) }}</h4>
+                        <small>Points totaux</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card bg-info text-white">
                     <div class="card-body text-center">
-                        <h4 class="mb-0">{{ number_format($players->avg('games_played') ?? 0, 1) }}</h4>
-                        <small>Parties par joueur</small>
+                        <i class="bi bi-controller fs-1 mb-2"></i>
+                        <h4 class="mb-0">{{ number_format($players->sum('games_played')) }}</h4>
+                        <small>Parties jouées</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card bg-warning text-white">
                     <div class="card-body text-center">
+                        <i class="bi bi-percent fs-1 mb-2"></i>
                         @php
-                            $totalGames = $players->sum('games_played') ?: 1;
-                            $totalWins = $players->sum('games_won') ?: 0;
-                            $winRate = ($totalWins / $totalGames) * 100;
+                            $totalPlayed = $players->sum('games_played');
+                            $totalWon = $players->sum('games_won');
+                            $winRate = $totalPlayed > 0 ? round(($totalWon / $totalPlayed) * 100, 1) : 0;
                         @endphp
-                        <h4 class="mb-0">{{ number_format($winRate, 1) }}%</h4>
-                        <small>Taux de victoire</small>
+                        <h4 class="mb-0">{{ $winRate }}%</h4>
+                        <small>Taux de victoire moyen</small>
                     </div>
                 </div>
             </div>
@@ -110,16 +125,18 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">
                 Liste des joueurs
-                <span class="badge bg-secondary">{{ $players->total() }}</span>
+                @if(isset($players))
+                    <span class="badge bg-secondary">{{ $players->total() }}</span>
+                @endif
             </h5>
         </div>
         <div class="card-body p-0">
-            @if($players->count() > 0)
+            @if(isset($players) && $players->count() > 0)
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
-                                <th>#</th>
+                                <th>Rang</th>
                                 <th>
                                     <a href="{{ request()->fullUrlWithQuery(['sort' => 'username', 'direction' => request('sort') == 'username' && request('direction') == 'asc' ? 'desc' : 'asc']) }}"
                                         class="text-decoration-none text-dark">
@@ -132,7 +149,7 @@
                                 <th>
                                     <a href="{{ request()->fullUrlWithQuery(['sort' => 'total_points', 'direction' => request('sort') == 'total_points' && request('direction') == 'asc' ? 'desc' : 'asc']) }}"
                                         class="text-decoration-none text-dark">
-                                        Points totaux
+                                        Points
                                         @if(request('sort') == 'total_points')
                                             <i class="bi bi-arrow-{{ request('direction') == 'asc' ? 'up' : 'down' }}"></i>
                                         @endif
@@ -158,16 +175,19 @@
                             @foreach($players as $index => $player)
                                 <tr>
                                     <td>
-                                        @if($index < 3)
-                                            @if($index === 0)
+                                        @php
+                                            $globalRank = ($players->currentPage() - 1) * $players->perPage() + $index + 1;
+                                        @endphp
+                                        @if($globalRank <= 3)
+                                            @if($globalRank === 1)
                                                 <i class="bi bi-trophy-fill text-warning fs-5"></i>
-                                            @elseif($index === 1)
+                                            @elseif($globalRank === 2)
                                                 <i class="bi bi-award-fill text-secondary fs-5"></i>
                                             @else
                                                 <i class="bi bi-award-fill fs-5" style="color: #cd7f32;"></i>
                                             @endif
                                         @else
-                                            <span class="text-muted">{{ $index + 1 }}</span>
+                                            <span class="text-muted">{{ $globalRank }}</span>
                                         @endif
                                     </td>
                                     <td>
@@ -188,25 +208,24 @@
                                     <td>
                                         <div>
                                             <strong class="text-dark">{{ $player->games_played ?? 0 }}</strong>
-                                            <small class="text-muted">jouées</small>
-                                        </div>
-                                        <div class="text-success small">
-                                            {{ $player->games_won ?? 0 }} gagnées
+                                            <div class="text-success small">
+                                                Gagnées: {{ $player->games_won ?? 0 }}
+                                            </div>
                                         </div>
                                     </td>
                                     <td>
                                         @php
-                                            $totalGames = $player->games_played ?: 1;
-                                            $wonGames = $player->games_won ?: 0;
-                                            $winRate = ($wonGames / $totalGames) * 100;
+                                            $played = $player->games_played ?? 0;
+                                            $won = $player->games_won ?? 0;
+                                            $winRate = $played > 0 ? round(($won / $played) * 100, 1) : 0;
                                         @endphp
                                         <span
                                             class="badge {{ $winRate >= 70 ? 'bg-success' : ($winRate >= 40 ? 'bg-warning' : 'bg-danger') }}">
-                                            {{ number_format($winRate, 1) }}%
+                                            {{ $winRate }}%
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="text-dark">{{ $player->current_streak ?? 0 }}</span>
+                                        <span class="text-info fw-bold">{{ $player->current_streak ?? 0 }}</span>
                                     </td>
                                     <td>
                                         <span class="text-success fw-bold">{{ $player->best_streak ?? 0 }}</span>
@@ -216,9 +235,10 @@
                                             class="text-muted small">{{ $player->created_at ? $player->created_at->format('d/m/Y') : 'N/A' }}</span>
                                     </td>
                                     <td>
-                                        <a href="{{ route('admin.players.show', $player) }}" class="btn btn-outline-info btn-sm"
-                                            title="Voir détails">
-                                            <i class="bi bi-eye"></i>
+                                        <!-- BOUTON SHOW SUPPRIMÉ, SEUL EDIT RESTE -->
+                                        <a href="{{ route('admin.players.edit', $player) }}"
+                                            class="btn btn-outline-warning btn-sm" title="Modifier">
+                                            <i class="bi bi-pencil"></i>
                                         </a>
                                     </td>
                                 </tr>
@@ -254,11 +274,4 @@
             @endif
         </div>
     </div>
-
-    <script>
-        function exportPlayers() {
-            // Fonction pour exporter les données des joueurs
-            window.open('{{ route("admin.players.index") }}?export=csv', '_blank');
-        }
-    </script>
 </x-admin-layout>

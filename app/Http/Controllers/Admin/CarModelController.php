@@ -128,16 +128,6 @@ class CarModelController extends Controller
     }
 
     /**
-     * Affichage d'un modèle spécifique
-     */
-    public function show(CarModel $model)
-    {
-        $model->load('brand');
-
-        return view('admin.models.show', compact('model'));
-    }
-
-    /**
      * Formulaire d'édition
      */
     public function edit(CarModel $model)

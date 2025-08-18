@@ -1,3 +1,200 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ========================================
+   CORRECTIONS CSS POUR LES IMAGES
+   À ajouter dans votre CSS global ou dans les vues
+======================================== */
+
+/* 1. IMAGES DANS LES TABLEAUX (logos brands, images models) */
+.table img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    border-radius: 4px;
+}
+
+/* Conteneurs spécifiques pour les images de tableaux */
+.img-table-container {
+    width: 50px;
+    height: 50px;
+    overflow: hidden;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+/* 2. IMAGES DANS LES CARDS (brand show, model show) */
+.card img {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain !important;
+    border-radius: 8px;
+}
+
+/* Images circulaires (logos brands dans show) */
+.img-circle {
+    width: 120px !important;
+    height: 120px !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    border-radius: 50% !important;
+}
+
+/* 3. PRÉVISUALISATIONS DANS LES FORMULAIRES */
+.preview-container {
+    max-width: 300px;
+    max-height: 200px;
+    overflow: hidden;
+    border-radius: 8px;
+    border: 2px dashed #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain !important;
+    border-radius: 6px;
+}
+
+/* 4. IMAGES RESPONSIVE DANS LES SESSIONS */
+.session-car-image {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+/* 5. AVATARS ET ICÔNES UTILISATEURS */
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* 6. FALLBACKS POUR IMAGES MANQUANTES */
+.img-fallback {
+    background-color: #6c757d;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-radius: 4px;
+}
+
+.img-fallback.circle {
+    border-radius: 50%;
+}
+
+/* 7. CORRECTIONS SPÉCIFIQUES BOOTSTRAP */
+.img-fluid {
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+.img-thumbnail {
+    max-width: 100% !important;
+    height: auto !important;
+    object-fit: cover !important;
+}
+
+/* 8. CONTAINERS FLEXIBLES */
+.img-container-flex {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background-color: #f8f9fa;
+}
+
+/* 9. IMAGES DANS LE DASHBOARD */
+.dashboard-img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+/* 10. MEDIA QUERIES POUR RESPONSIVE */
+@media (max-width: 768px) {
+    .img-table-container {
+        width: 40px;
+        height: 40px;
+    }
+
+    .img-circle {
+        width: 80px !important;
+        height: 80px !important;
+    }
+
+    .session-car-image {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+/* 11. ANIMATIONS POUR LE CHARGEMENT */
+.img-loading {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* 12. CORRECTION POUR LES BORDURES ET OMBRES */
+.img-styled {
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+.img-styled:hover {
+    transform: scale(1.05);
+}
+
+/* 13. CLASSES UTILITAIRES CUSTOM */
+.aspect-ratio-1-1 {
+    aspect-ratio: 1 / 1;
+}
+
+.aspect-ratio-16-9 {
+    aspect-ratio: 16 / 9;
+}
+
+.aspect-ratio-4-3 {
+    aspect-ratio: 4 / 3;
+}
+
+/* Force object-fit pour tous les navigateurs */
+.object-cover {
+    object-fit: cover !important;
+    object-position: center !important;
+}
+
+.object-contain {
+    object-fit: contain !important;
+    object-position: center !important;
+}
+
+.object-fill {
+    object-fit: fill !important;
+}

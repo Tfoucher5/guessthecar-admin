@@ -1,199 +1,315 @@
 <x-admin-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Détails de la Marque') }} : {{ $brand->name }}
-            </h2>
-            <div class="space-x-2">
-                <a href="{{ route('admin.brands.edit', $brand) }}"
-                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    Modifier
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 mb-1 text-dark">
+                    <i class="bi bi-building me-2"></i>{{ $brand->name }}
+                </h1>
+                <p class="text-muted mb-0">Détails de la marque automobile</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ route('admin.brands.edit', $brand) }}" class="btn btn-primary">
+                    <i class="bi bi-pencil me-2"></i>Modifier
                 </a>
-                <a href="{{ route('admin.brands.index') }}"
-                    class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                    Retour à la liste
+                <a href="{{ route('admin.brands.index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Retour à la liste
                 </a>
             </div>
         </div>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+    <!-- Messages de succès/erreur -->
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
 
-            <!-- Informations de la marque -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Logo et infos principales -->
-                        <div>
-                            @if($brand->logo_url)
-                                <div class="mb-4">
-                                    <img src="{{ $brand->logo_url }}" alt="{{ $brand->name }}"
-                                        class="h-24 w-24 object-cover rounded-lg border">
-                                </div>
-                            @endif
-
-                            <dl class="space-y-4">
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500">Nom</dt>
-                                    <dd class="text-lg font-semibold text-gray-900">{{ $brand->name }}</dd>
-                                </div>
-
-                                @if($brand->country)
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-500">Pays</dt>
-                                        <dd class="text-sm text-gray-900">{{ $brand->country }}</dd>
-                                    </div>
-                                @endif
-
-                                @if($brand->founded_year)
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-500">Année de fondation</dt>
-                                        <dd class="text-sm text-gray-900">{{ $brand->founded_year }}</dd>
-                                    </div>
-                                @endif
-
-                                <div>
-                                    <dt class="text-sm font-medium text-gray-500">Ajoutée le</dt>
-                                    <dd class="text-sm text-gray-900">{{ $brand->created_at->format('d/m/Y à H:i') }}
-                                    </dd>
-                                </div>
-                            </dl>
-                        </div>
-
-                        <!-- Statistiques -->
-                        <div>
-                            <h3 class="text-lg font-medium text-gray-900 mb-4">Statistiques</h3>
-                            <div class="space-y-4">
-                                <div class="bg-blue-50 p-4 rounded-lg">
-                                    <dt class="text-sm font-medium text-blue-600">Total modèles</dt>
-                                    <dd class="text-2xl font-bold text-blue-900">{{ $stats['total_models'] }}</dd>
-                                </div>
-
-                                <!-- Répartition par difficulté -->
-                                @if($stats['total_models'] > 0)
-                                    <div class="space-y-2">
-                                        <h4 class="text-sm font-medium text-gray-700">Répartition par difficulté</h4>
-                                        @foreach([1 => 'Facile', 2 => 'Moyen', 3 => 'Difficile'] as $level => $label)
-                                            @php $count = $stats['by_difficulty'][$level] ?? 0 @endphp
-                                            <div class="flex justify-between items-center">
-                                                <span class="text-sm text-gray-600">{{ $label }}</span>
-                                                <span
-                                                    class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $level == 1 ? 'bg-green-100 text-green-800' : ($level == 2 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') }}">
-                                                    {{ $count }}
-                                                </span>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endif
-
-                                @if($stats['latest_model'])
-                                    <div class="bg-gray-50 p-4 rounded-lg">
-                                        <dt class="text-sm font-medium text-gray-600">Dernier modèle ajouté</dt>
-                                        <dd class="text-sm font-semibold text-gray-900">{{ $stats['latest_model']->name }}
-                                        </dd>
-                                        <dd class="text-xs text-gray-500">
-                                            {{ $stats['latest_model']->created_at->format('d/m/Y') }}</dd>
-                                    </div>
-                                @endif
+    <div class="row g-4">
+        <!-- Informations principales -->
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Informations de la marque
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Logo -->
+                    <div class="text-center mb-4">
+                        @if($brand->logo_url)
+                            <img src="{{ $brand->logo_url }}" 
+                                 alt="{{ $brand->name }}"
+                                 class="rounded-circle border border-3 border-light shadow"
+                                 style="width: 120px; height: 120px; object-fit: cover;"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="bg-primary text-white rounded-circle border border-3 border-light shadow d-none align-items-center justify-content-center mx-auto" 
+                                 style="width: 120px; height: 120px; font-size: 3rem; font-weight: bold;">
+                                {{ substr($brand->name, 0, 1) }}
                             </div>
-                        </div>
+                        @else
+                            <div class="bg-primary text-white rounded-circle border border-3 border-light shadow d-flex align-items-center justify-content-center mx-auto" 
+                                 style="width: 120px; height: 120px; font-size: 3rem; font-weight: bold;">
+                                {{ substr($brand->name, 0, 1) }}
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Détails -->
+                    <div class="table-responsive">
+                        <table class="table table-borderless">
+                            <tbody>
+                                <tr>
+                                    <td class="fw-medium text-muted ps-0">Nom :</td>
+                                    <td class="text-end pe-0">
+                                        <strong>{{ $brand->name }}</strong>
+                                    </td>
+                                </tr>
+                                @if($brand->country)
+                                <tr>
+                                    <td class="fw-medium text-muted ps-0">Pays :</td>
+                                    <td class="text-end pe-0">
+                                        <span class="badge bg-info">{{ $brand->country }}</span>
+                                    </td>
+                                </tr>
+                                @endif
+                                @if($brand->founded_year)
+                                <tr>
+                                    <td class="fw-medium text-muted ps-0">Fondée en :</td>
+                                    <td class="text-end pe-0">
+                                        <strong>{{ $brand->founded_year }}</strong>
+                                    </td>
+                                </tr>
+                                @endif
+                                <tr>
+                                    <td class="fw-medium text-muted ps-0">Modèles :</td>
+                                    <td class="text-end pe-0">
+                                        <span class="badge bg-success fs-6">{{ $stats['total_models'] }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-medium text-muted ps-0">Créée le :</td>
+                                    <td class="text-end pe-0">
+                                        <small class="text-muted">{{ $brand->created_at->format('d/m/Y à H:i') }}</small>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Liste des modèles -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-medium text-gray-900">Modèles de cette marque</h3>
-                        <a href="{{ route('admin.models.create', ['brand_id' => $brand->id]) }}"
-                            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded text-sm">
-                            Ajouter un modèle
-                        </a>
+        <!-- Statistiques et actions -->
+        <div class="col-lg-8">
+            <!-- Statistiques des modèles -->
+            @if($stats['total_models'] > 0)
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-bar-chart me-2"></i>Statistiques des modèles
+                        </h5>
                     </div>
-
-                    @if($brand->models->count() > 0)
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Image</th>
-                                        <th
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Nom</th>
-                                        <th
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Année</th>
-                                        <th
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Difficulté</th>
-                                        <th
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    @foreach($brand->models as $model)
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                @if($model->image_url)
-                                                    <img src="{{ $model->image_url }}" alt="{{ $model->name }}"
-                                                        class="h-12 w-12 rounded-lg object-cover">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <i class="bi bi-car-front fs-1 text-primary mb-2"></i>
+                                    <h4 class="mb-0">{{ $stats['total_models'] }}</h4>
+                                    <small class="text-muted">Total modèles</small>
+                                </div>
+                            </div>
+                            
+                            @if($stats['by_difficulty']->count() > 0)
+                                @foreach([1 => 'Facile', 2 => 'Moyen', 3 => 'Difficile'] as $level => $label)
+                                    @if($stats['by_difficulty']->has($level))
+                                        <div class="col-md-4">
+                                            <div class="text-center p-3 bg-light rounded">
+                                                @if($level == 1)
+                                                    <i class="bi bi-emoji-smile fs-1 text-success mb-2"></i>
+                                                @elseif($level == 2)
+                                                    <i class="bi bi-emoji-neutral fs-1 text-warning mb-2"></i>
                                                 @else
-                                                    <div class="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                                                        <svg class="h-6 w-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd"
-                                                                d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
-                                                                clip-rule="evenodd"></path>
-                                                        </svg>
-                                                    </div>
+                                                    <i class="bi bi-emoji-frown fs-1 text-danger mb-2"></i>
                                                 @endif
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="text-sm font-medium text-gray-900">{{ $model->name }}</div>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="text-sm text-gray-500">{{ $model->year ?? 'Non spécifiée' }}</div>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <span
-                                                    class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $model->difficulty_color == 'green' ? 'bg-green-100 text-green-800' : ($model->difficulty_color == 'yellow' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') }}">
-                                                    {{ $model->difficulty_text }}
-                                                </span>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                                <a href="{{ route('admin.models.show', $model) }}"
-                                                    class="text-blue-600 hover:text-blue-900">Voir</a>
-                                                <a href="{{ route('admin.models.edit', $model) }}"
-                                                    class="text-indigo-600 hover:text-indigo-900">Modifier</a>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                                                <h4 class="mb-0">{{ $stats['by_difficulty'][$level] }}</h4>
+                                                <small class="text-muted">{{ $label }}</small>
+                                            </div>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            @endif
                         </div>
-                    @else
-                        <div class="text-center py-8">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 110 2h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 110-2h4z" />
-                            </svg>
-                            <h3 class="mt-2 text-sm font-medium text-gray-900">Aucun modèle</h3>
-                            <p class="mt-1 text-sm text-gray-500">Cette marque n'a pas encore de modèles.</p>
-                            <div class="mt-6">
-                                <a href="{{ route('admin.models.create', ['brand_id' => $brand->id]) }}"
-                                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
-                                    Ajouter le premier modèle
+                    </div>
+                </div>
+            @endif
+
+            <!-- Actions rapides -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-lightning me-2"></i>Actions rapides
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="d-grid">
+                                <a href="{{ route('admin.models.create', ['brand_id' => $brand->id]) }}" 
+                                   class="btn btn-outline-primary btn-lg">
+                                    <i class="bi bi-plus-circle me-2"></i>
+                                    Ajouter un modèle
                                 </a>
                             </div>
                         </div>
-                    @endif
+                        <div class="col-md-6">
+                            <div class="d-grid">
+                                <a href="{{ route('admin.models.index', ['brand_id' => $brand->id]) }}" 
+                                   class="btn btn-outline-info btn-lg">
+                                    <i class="bi bi-list me-2"></i>
+                                    Voir tous les modèles
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-grid">
+                                <a href="{{ route('admin.brands.edit', $brand) }}" 
+                                   class="btn btn-outline-warning btn-lg">
+                                    <i class="bi bi-pencil me-2"></i>
+                                    Modifier la marque
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-grid">
+                                @if($stats['total_models'] == 0)
+                                    <form action="{{ route('admin.brands.destroy', $brand) }}" 
+                                          method="POST" 
+                                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette marque ?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-outline-danger btn-lg w-100">
+                                            <i class="bi bi-trash me-2"></i>
+                                            Supprimer la marque
+                                        </button>
+                                    </form>
+                                @else
+                                    <button class="btn btn-outline-danger btn-lg" disabled title="Impossible de supprimer : cette marque a des modèles associés">
+                                        <i class="bi bi-shield-exclamation me-2"></i>
+                                        Suppression bloquée
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Liste des modèles -->
+    @if($brand->models->count() > 0)
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-car-front me-2"></i>Modèles de {{ $brand->name }}
+                    <span class="badge bg-secondary ms-2">{{ $brand->models->count() }}</span>
+                </h5>
+                <a href="{{ route('admin.models.create', ['brand_id' => $brand->id]) }}" 
+                   class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus me-1"></i>Nouveau modèle
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Nom du modèle</th>
+                                <th>Année</th>
+                                <th>Difficulté</th>
+                                <th>Créé le</th>
+                                <th width="100">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($brand->models as $model)
+                                <tr>
+                                    <td>
+                                        @if($model->image_url)
+                                            <img src="{{ $model->image_url }}" 
+                                                 alt="{{ $model->name }}"
+                                                 class="rounded"
+                                                 style="width: 50px; height: 50px; object-fit: cover;"
+                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                            <div class="bg-secondary text-white rounded d-none align-items-center justify-content-center" 
+                                                 style="width: 50px; height: 50px; font-size: 1.2rem;">
+                                                <i class="bi bi-car-front"></i>
+                                            </div>
+                                        @else
+                                            <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center" 
+                                                 style="width: 50px; height: 50px; font-size: 1.2rem;">
+                                                <i class="bi bi-car-front"></i>
+                                            </div>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <strong>{{ $model->name }}</strong>
+                                    </td>
+                                    <td>
+                                        @if($model->year)
+                                            <span class="badge bg-light text-dark">{{ $model->year }}</span>
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($model->difficulty_level == 1)
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-emoji-smile me-1"></i>Facile
+                                            </span>
+                                        @elseif($model->difficulty_level == 2)
+                                            <span class="badge bg-warning">
+                                                <i class="bi bi-emoji-neutral me-1"></i>Moyen
+                                            </span>
+                                        @else
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-emoji-frown me-1"></i>Difficile
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ $model->created_at->format('d/m/Y') }}</small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ route('admin.models.edit', $model) }}" 
+                                               class="btn btn-outline-warning btn-sm" 
+                                               title="Modifier">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    @else
+        <div class="card mt-4">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-car-front text-muted" style="font-size: 4rem;"></i>
+                <h4 class="mt-3 text-dark">Aucun modèle</h4>
+                <p class="text-muted mb-4">Cette marque n'a encore aucun modèle associé.</p>
+                <a href="{{ route('admin.models.create', ['brand_id' => $brand->id]) }}" 
+                   class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Ajouter le premier modèle
+                </a>
+            </div>
+        </div>
+    @endif
 </x-admin-layout>
