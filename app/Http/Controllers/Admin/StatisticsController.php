@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -21,7 +22,9 @@ class StatisticsController extends Controller
             'total_players' => UserScore::count(),
             'total_sessions' => GameSession::count(),
             'total_collections' => UserCarFound::count(),
-            'completion_rate' => GameSession::where('completed', true)->count() / max(GameSession::count(), 1) * 100
+            'completion_rate' => GameSession::count() > 0
+                ? (GameSession::where('completed', true)->count() / GameSession::count()) * 100
+                : 0
         ];
 
         // Évolution mensuelle
@@ -29,8 +32,8 @@ class StatisticsController extends Controller
                 DATE_FORMAT(started_at, "%Y-%m") as month,
                 COUNT(*) as sessions,
                 SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END) as completed,
-                AVG(duration_seconds) as avg_duration,
-                SUM(points_earned) as total_points
+                AVG(IFNULL(duration_seconds, 0)) as avg_duration,
+                SUM(IFNULL(points_earned, 0)) as total_points
             ')
             ->where('started_at', '>=', now()->subMonths(12))
             ->groupBy('month')
@@ -38,42 +41,69 @@ class StatisticsController extends Controller
             ->get();
 
         // Répartition par difficulté des sessions
-        $difficultyStats = GameSession::join('models', 'game_sessions.car_id', '=', 'models.id')
+        $difficultyStats = GameSession::join('car_models', 'game_sessions.car_id', '=', 'car_models.id')
             ->selectRaw('
-                models.difficulty_level,
+                car_models.difficulty_level,
                 COUNT(*) as sessions_count,
-                AVG(game_sessions.duration_seconds) as avg_duration,
+                AVG(IFNULL(game_sessions.duration_seconds, 0)) as avg_duration,
                 SUM(CASE WHEN game_sessions.completed = 1 THEN 1 ELSE 0 END) as completed_count
             ')
-            ->groupBy('models.difficulty_level')
+            ->groupBy('car_models.difficulty_level')
             ->get();
 
         // Performance par pays
         $countryPerformance = DB::table('brands')
-            ->join('models', 'brands.id', '=', 'models.brand_id')
-            ->join('game_sessions', 'models.id', '=', 'game_sessions.car_id')
+            ->join('car_models', 'brands.id', '=', 'car_models.brand_id')
+            ->join('game_sessions', 'car_models.id', '=', 'game_sessions.car_id')
             ->selectRaw('
                 brands.country,
                 COUNT(*) as sessions_count,
-                AVG(game_sessions.duration_seconds) as avg_duration,
+                AVG(IFNULL(game_sessions.duration_seconds, 0)) as avg_duration,
                 SUM(CASE WHEN game_sessions.completed = 1 THEN 1 ELSE 0 END) as success_count
             ')
+            ->whereNotNull('brands.country')
             ->groupBy('brands.country')
             ->orderBy('sessions_count', 'desc')
+            ->limit(10)
             ->get();
+
+        // Top marques les plus jouées
+        $topBrands = Brand::selectRaw('
+                brands.id,
+                brands.name,
+                brands.logo_url,
+                COUNT(game_sessions.id) as sessions_count,
+                AVG(IFNULL(game_sessions.duration_seconds, 0)) as avg_duration
+            ')
+            ->join('car_models', 'brands.id', '=', 'car_models.brand_id')
+            ->join('game_sessions', 'car_models.id', '=', 'game_sessions.car_id')
+            ->groupBy('brands.id', 'brands.name', 'brands.logo_url')
+            ->orderBy('sessions_count', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Statistiques de performance des joueurs
+        $playerStats = [
+            'avg_points_per_player' => UserScore::avg('total_points') ?? 0,
+            'top_performer' => UserScore::orderBy('total_points', 'desc')->first(),
+            'most_active' => UserScore::orderBy('games_played', 'desc')->first(),
+            'best_success_rate' => UserScore::orderBy('success_rate', 'desc')->first()
+        ];
 
         return view('admin.statistics.index', compact(
             'generalStats',
             'monthlyEvolution',
             'difficultyStats',
-            'countryPerformance'
+            'countryPerformance',
+            'topBrands',
+            'playerStats'
         ));
     }
 
     public function export(Request $request)
     {
         $type = $request->get('type', 'players');
-        
+
         switch ($type) {
             case 'players':
                 return $this->exportPlayers();
@@ -89,19 +119,27 @@ class StatisticsController extends Controller
     private function exportPlayers()
     {
         $players = UserScore::with(['gameSessions', 'userCarsFound'])->get();
-        
+
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="players_export_' . date('Y-m-d') . '.csv"',
         ];
 
-        $callback = function() use ($players) {
+        $callback = function () use ($players) {
             $file = fopen('php://output', 'w');
-            
+
             // En-têtes CSV
             fputcsv($file, [
-                'ID', 'Username', 'Guild ID', 'Total Points', 'Games Played', 
-                'Games Won', 'Success Rate', 'Best Streak', 'Cars Found', 'Created At'
+                'ID',
+                'Username',
+                'Guild ID',
+                'Total Points',
+                'Games Played',
+                'Games Won',
+                'Success Rate',
+                'Best Streak',
+                'Cars Found',
+                'Created At'
             ]);
 
             // Données
@@ -129,18 +167,25 @@ class StatisticsController extends Controller
     private function exportSessions()
     {
         $sessions = GameSession::with(['carModel.brand', 'userScore'])->get();
-        
+
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="sessions_export_' . date('Y-m-d') . '.csv"',
         ];
 
-        $callback = function() use ($sessions) {
+        $callback = function () use ($sessions) {
             $file = fopen('php://output', 'w');
-            
+
             fputcsv($file, [
-                'Session ID', 'Player', 'Brand', 'Model', 'Started At', 
-                'Duration', 'Completed', 'Points Earned', 'Attempts Make', 'Attempts Model'
+                'Session ID',
+                'Player',
+                'Brand',
+                'Model',
+                'Started At',
+                'Duration (seconds)',
+                'Completed',
+                'Points Earned',
+                'Guild ID'
             ]);
 
             foreach ($sessions as $session) {
@@ -153,8 +198,7 @@ class StatisticsController extends Controller
                     $session->duration_seconds,
                     $session->completed ? 'Yes' : 'No',
                     $session->points_earned,
-                    $session->attempts_make,
-                    $session->attempts_model
+                    $session->guild_id
                 ]);
             }
 
@@ -166,19 +210,24 @@ class StatisticsController extends Controller
 
     private function exportCollections()
     {
-        $collections = UserCarFound::with(['carModel.brand', 'userScore'])->get();
-        
+        $collections = UserCarFound::with(['userScore', 'carModel.brand'])->get();
+
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="collections_export_' . date('Y-m-d') . '.csv"',
         ];
 
-        $callback = function() use ($collections) {
+        $callback = function () use ($collections) {
             $file = fopen('php://output', 'w');
-            
+
             fputcsv($file, [
-                'Player', 'Brand', 'Model', 'Found At', 
-                'Attempts Used', 'Time Taken', 'Guild ID'
+                'Player',
+                'Brand',
+                'Model',
+                'Found At',
+                'Attempts Used',
+                'Time Taken',
+                'Guild ID'
             ]);
 
             foreach ($collections as $item) {
@@ -198,191 +247,71 @@ class StatisticsController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
-}request->guild_id);
+
+    /**
+     * API endpoint pour récupérer les statistiques en temps réel
+     */
+    public function api(Request $request)
+    {
+        $period = $request->get('period', 'week');
+
+        $stats = [];
+
+        switch ($period) {
+            case 'today':
+                $stats = $this->getTodayStats();
+                break;
+            case 'week':
+                $stats = $this->getWeekStats();
+                break;
+            case 'month':
+                $stats = $this->getMonthStats();
+                break;
+            case 'year':
+                $stats = $this->getYearStats();
+                break;
         }
 
-        // Filtre par niveau de compétence
-        if ($request->filled('skill_level')) {
-            $points = match($request->skill_level) {
-                'Expert' => ['>=', 100],
-                'Avancé' => ['>=', 50, '<', 100],
-                'Intermédiaire' => ['>=', 20, '<', 50],
-                'Apprenti' => ['>=', 10, '<', 20],
-                'Débutant' => ['<', 10],
-                default => null
-            };
-
-            if ($points) {
-                if (count($points) === 2) {
-                    $query->where('total_points', $points[0], $points[1]);
-                } else {
-                    $query->where('total_points', $points[0], $points[1])
-                          ->where('total_points', $points[2], $points[3]);
-                }
-            }
-        }
-
-        // Tri
-        $sortField = $request->get('sort', 'total_points');
-        $sortDirection = $request->get('direction', 'desc');
-        
-        if (in_array($sortField, ['username', 'total_points', 'games_played', 'games_won', 'created_at'])) {
-            $query->orderBy($sortField, $sortDirection);
-        } else {
-            $query->orderBy('total_points', 'desc');
-        }
-
-        $players = $query->paginate(20)->withQueryString();
-
-        // Données pour les filtres
-        $guilds = UserScore::selectRaw('guild_id, COUNT(*) as players_count')
-            ->whereNotNull('guild_id')
-            ->groupBy('guild_id')
-            ->orderBy('players_count', 'desc')
-            ->get();
-
-        $skillLevels = ['Expert', 'Avancé', 'Intermédiaire', 'Apprenti', 'Débutant'];
-
-        return view('admin.players.index', compact('players', 'guilds', 'skillLevels'));
+        return response()->json($stats);
     }
 
-    public function show(UserScore $userScore)
+    private function getTodayStats()
     {
-        $userScore->load(['gameSessions.carModel.brand', 'userCarsFound.carModel.brand']);
-
-        // Sessions récentes
-        $sessions = $userScore->gameSessions()
-            ->with('carModel.brand')
-            ->orderBy('started_at', 'desc')
-            ->limit(20)
-            ->get();
-
-        // Voitures trouvées
-        $carsFound = $userScore->userCarsFound()
-            ->with(['carModel.brand'])
-            ->orderBy('found_at', 'desc')
-            ->limit(20)
-            ->get();
-
-        // Statistiques détaillées
-        $stats = [
-            'total_sessions' => $userScore->gameSessions()->count(),
-            'average_session_time' => $userScore->gameSessions()
-                ->whereNotNull('duration_seconds')
-                ->avg('duration_seconds'),
-            'favorite_brand' => $userScore->userCarsFound()
-                ->selectRaw('brand_id, COUNT(*) as count')
-                ->with('brand')
-                ->groupBy('brand_id')
-                ->orderBy('count', 'desc')
-                ->first(),
-            'cars_collection_count' => $userScore->userCarsFound()->count(),
-            'points_per_game' => $userScore->games_played > 0 
-                ? round($userScore->total_points / $userScore->games_played, 2) 
-                : 0,
+        return [
+            'sessions' => GameSession::whereDate('started_at', today())->count(),
+            'players' => GameSession::whereDate('started_at', today())->distinct('user_id')->count(),
+            'completed' => GameSession::whereDate('started_at', today())->where('completed', true)->count(),
+            'points_earned' => GameSession::whereDate('started_at', today())->sum('points_earned')
         ];
-
-        // Progression mensuelle
-        $monthlyProgress = $userScore->gameSessions()
-            ->selectRaw('
-                DATE_FORMAT(started_at, "%Y-%m") as month,
-                COUNT(*) as games_count,
-                SUM(points_earned) as points_earned,
-                SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END) as completed_count
-            ')
-            ->where('started_at', '>=', now()->subMonths(6))
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
-
-        return view('admin.players.show', compact(
-            'userScore', 
-            'sessions', 
-            'carsFound', 
-            'stats', 
-            'monthlyProgress'
-        ));
     }
 
-    public function edit(UserScore $userScore)
+    private function getWeekStats()
     {
-        return view('admin.players.edit', compact('userScore'));
+        return [
+            'sessions' => GameSession::where('started_at', '>=', now()->subWeek())->count(),
+            'players' => GameSession::where('started_at', '>=', now()->subWeek())->distinct('user_id')->count(),
+            'completed' => GameSession::where('started_at', '>=', now()->subWeek())->where('completed', true)->count(),
+            'points_earned' => GameSession::where('started_at', '>=', now()->subWeek())->sum('points_earned')
+        ];
     }
 
-    public function update(Request $request, UserScore $userScore)
+    private function getMonthStats()
     {
-        $validated = $request->validate([
-            'username' => 'required|string|max:32',
-            'total_points' => 'nullable|numeric|min:0',
-            'games_played' => 'nullable|integer|min:0',
-            'games_won' => 'nullable|integer|min:0',
-            'best_streak' => 'nullable|integer|min:0',
-            'current_streak' => 'nullable|integer|min:0',
-        ]);
-
-        // Validation logique
-        if ($validated['games_won'] > $validated['games_played']) {
-            return back()->withErrors(['games_won' => 'Le nombre de parties gagnées ne peut pas être supérieur au nombre de parties jouées.']);
-        }
-
-        $userScore->update($validated);
-
-        return redirect()->route('admin.players.show', $userScore)
-            ->with('success', 'Joueur mis à jour avec succès.');
+        return [
+            'sessions' => GameSession::where('started_at', '>=', now()->subMonth())->count(),
+            'players' => GameSession::where('started_at', '>=', now()->subMonth())->distinct('user_id')->count(),
+            'completed' => GameSession::where('started_at', '>=', now()->subMonth())->where('completed', true)->count(),
+            'points_earned' => GameSession::where('started_at', '>=', now()->subMonth())->sum('points_earned')
+        ];
     }
 
-    public function sessions(Request $request)
+    private function getYearStats()
     {
-        $query = GameSession::with(['carModel.brand', 'userScore']);
-
-        // Filtres
-        if ($request->filled('status')) {
-            switch ($request->status) {
-                case 'completed':
-                    $query->completed();
-                    break;
-                case 'abandoned':
-                    $query->abandoned();
-                    break;
-                case 'in_progress':
-                    $query->inProgress();
-                    break;
-            }
-        }
-
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->user_id);
-        }
-
-        if ($request->filled('guild_id')) {
-            $query->where('guild_id', $request->guild_id);
-        }
-
-        if ($request->filled('date_from')) {
-            $query->where('started_at', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->where('started_at', '<=', $request->date_to . ' 23:59:59');
-        }
-
-        $sessions = $query->orderBy('started_at', 'desc')->paginate(20)->withQueryString();
-
-        // Données pour les filtres
-        $players = UserScore::orderBy('username')->get();
-        $guilds = GameSession::selectRaw('guild_id, COUNT(*) as sessions_count')
-            ->whereNotNull('guild_id')
-            ->groupBy('guild_id')
-            ->orderBy('sessions_count', 'desc')
-            ->get();
-
-        return view('admin.sessions.index', compact('sessions', 'players', 'guilds'));
-    }
-
-    public function sessionShow(GameSession $gameSession)
-    {
-        $gameSession->load(['carModel.brand', 'userScore']);
-
-        return view('admin.sessions.show', compact('gameSession'));
+        return [
+            'sessions' => GameSession::where('started_at', '>=', now()->subYear())->count(),
+            'players' => GameSession::where('started_at', '>=', now()->subYear())->distinct('user_id')->count(),
+            'completed' => GameSession::where('started_at', '>=', now()->subYear())->where('completed', true)->count(),
+            'points_earned' => GameSession::where('started_at', '>=', now()->subYear())->sum('points_earned')
+        ];
     }
 }

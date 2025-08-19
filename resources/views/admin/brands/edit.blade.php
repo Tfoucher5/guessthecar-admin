@@ -1,187 +1,160 @@
 <x-admin-layout>
-    <x-slot name="header">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h1 class="h3 mb-1 text-dark">
-                    <i class="bi bi-pencil me-2"></i>Modifier la marque
-                </h1>
-                <p class="text-muted mb-0">{{ $brand->name }}</p>
-            </div>
-            <div class="d-flex gap-2">
-                <a href="{{ route('admin.brands.show', $brand) }}" class="btn btn-outline-info">
-                    <i class="bi bi-eye me-2"></i>Voir détails
-                </a>
-                <a href="{{ route('admin.brands.index') }}" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left me-2"></i>Retour à la liste
-                </a>
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="breadcrumb" class="mb-4">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Tableau de bord</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('admin.brands.index') }}">Marques</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Modifier {{ $brand->name }}</li>
+                    </ol>
+                </nav>
             </div>
         </div>
-    </x-slot>
 
-    <!-- Messages de succès/erreur -->
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    <div class="card">
-        <div class="card-header">
-            <h5 class="card-title mb-0">
-                <i class="bi bi-building me-2"></i>Informations de la marque
-            </h5>
-        </div>
-        <div class="card-body">
-            <form action="{{ route('admin.brands.update', $brand) }}" method="POST">
-                @csrf
-                @method('PUT')
-
-                <div class="row g-4">
-                    <!-- Nom de la marque -->
-                    <div class="col-md-6">
-                        <label for="name" class="form-label">
-                            Nom de la marque <span class="text-danger">*</span>
-                        </label>
-                        <input type="text" class="form-control @error('name') is-invalid @enderror" id="name"
-                            name="name" value="{{ old('name', $brand->name) }}" placeholder="Ex: BMW, Mercedes-Benz..."
-                            required>
-                        @error('name')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="bi bi-pencil-square me-2"></i>
+                            Modifier la marque : {{ $brand->name }}
+                        </h4>
                     </div>
 
-                    <!-- Pays -->
-                    <div class="col-md-6">
-                        <label for="country" class="form-label">Pays d'origine</label>
-                        <input type="text" class="form-control @error('country') is-invalid @enderror" id="country"
-                            name="country" value="{{ old('country', $brand->country) }}"
-                            placeholder="Ex: Allemagne, France, Japon...">
-                        @error('country')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                    <div class="card-body">
+                        <form action="{{ route('admin.brands.update', $brand) }}" method="POST">
+                            @csrf
+                            @method('PUT')
 
-                    <!-- URL du logo -->
-                    <div class="col-md-8">
-                        <label for="logo_url" class="form-label">URL du logo</label>
-                        <input type="url" class="form-control @error('logo_url') is-invalid @enderror" id="logo_url"
-                            name="logo_url" value="{{ old('logo_url', $brand->logo_url) }}"
-                            placeholder="https://exemple.com/logo.png">
-                        @error('logo_url')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                        <div class="form-text">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Ajoutez l'URL d'une image pour le logo de la marque
-                        </div>
-                    </div>
+                            <div class="row">
+                                <!-- Formulaire principal -->
+                                <div class="col-lg-6">
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">
+                                            Nom de la marque <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control @error('name') is-invalid @enderror"
+                                            id="name" name="name" value="{{ old('name', $brand->name) }}" required
+                                            oninput="updatePreview()">
+                                        @error('name')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
 
-                    <!-- Année de fondation -->
-                    <div class="col-md-4">
-                        <label for="founded_year" class="form-label">Année de fondation</label>
-                        <input type="number" class="form-control @error('founded_year') is-invalid @enderror"
-                            id="founded_year" name="founded_year"
-                            value="{{ old('founded_year', $brand->founded_year) }}" min="1800" max="{{ date('Y') }}"
-                            placeholder="Ex: 1916">
-                        @error('founded_year')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                                    <div class="mb-3">
+                                        <label for="country" class="form-label">Pays d'origine</label>
+                                        <input type="text" class="form-control @error('country') is-invalid @enderror"
+                                            id="country" name="country" value="{{ old('country', $brand->country) }}"
+                                            placeholder="Ex: France, Allemagne, Japon..." oninput="updatePreview()">
+                                        @error('country')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
 
-                    <!-- Prévisualisation du logo -->
-                    <div class="col-12">
-                        <div class="card bg-light">
-                            <div class="card-body">
-                                <h6 class="card-title">
-                                    <i class="bi bi-eye me-2"></i>Prévisualisation
-                                </h6>
-                                <div id="logo-preview">
-                                    <div class="d-flex align-items-center">
-                                        <!-- Image du logo -->
-                                        <img id="preview-image" src="{{ $brand->logo_url }}"
-                                            alt="Prévisualisation du logo" class="rounded me-3"
-                                            style="width: 60px; height: 60px; object-fit: contain; {{ $brand->logo_url ? '' : 'display: none;' }}">
+                                    <div class="mb-3">
+                                        <label for="founded_year" class="form-label">Année de fondation</label>
+                                        <input type="number"
+                                            class="form-control @error('founded_year') is-invalid @enderror"
+                                            id="founded_year" name="founded_year"
+                                            value="{{ old('founded_year', $brand->founded_year) }}" min="1800"
+                                            max="{{ date('Y') }}" placeholder="Ex: 1886" oninput="updatePreview()">
+                                        @error('founded_year')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
 
-                                        <div>
-                                            <h5 id="preview-name" class="mb-1">{{ $brand->name }}</h5>
-                                            <small id="preview-details" class="text-muted">
-                                                @php
-                                                    $details = [];
-                                                    if ($brand->country)
-                                                        $details[] = $brand->country;
-                                                    if ($brand->founded_year)
-                                                        $details[] = "Fondée en {$brand->founded_year}";
-                                                @endphp
-                                                {{ implode(' • ', $details) }}
-                                            </small>
+                                    <div class="mb-3">
+                                        <label for="logo_url" class="form-label">URL du logo</label>
+                                        <input type="url" class="form-control @error('logo_url') is-invalid @enderror"
+                                            id="logo_url" name="logo_url"
+                                            value="{{ old('logo_url', $brand->logo_url) }}"
+                                            placeholder="https://example.com/logo.png" oninput="updatePreview()">
+                                        @error('logo_url')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        <div class="form-text">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Formats recommandés: PNG, JPG, SVG (max 500 caractères)
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Informations supplémentaires -->
-                    <div class="col-12">
-                        <div class="card bg-info bg-opacity-10 border-info">
-                            <div class="card-body">
-                                <h6 class="card-title text-info">
-                                    <i class="bi bi-info-circle me-2"></i>Informations supplémentaires
-                                </h6>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <small class="text-muted d-block">Modèles associés</small>
-                                        <strong>{{ $brand->models()->count() }} modèle(s)</strong>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <small class="text-muted d-block">Créée le</small>
-                                        <strong>{{ $brand->created_at->format('d/m/Y à H:i') }}</strong>
+                                <!-- Prévisualisation -->
+                                <div class="col-lg-6">
+                                    <div class="sticky-top" style="top: 20px;">
+                                        <h6 class="text-muted mb-3">
+                                            <i class="bi bi-eye me-1"></i>
+                                            Prévisualisation
+                                        </h6>
+
+                                        <div class="card bg-light border-dashed">
+                                            <div class="card-body text-center">
+                                                <div class="mb-3">
+                                                    <!-- Image avec fallback corrigé -->
+                                                    <img id="preview-image" src="{{ $brand->logo_url }}" alt="Logo"
+                                                        class="img-fluid rounded shadow-sm"
+                                                        style="max-width: 80px; max-height: 80px; object-fit: contain; {{ $brand->logo_url ? 'display: block;' : 'display: none;' }}"
+                                                        onerror="this.style.display='none'; document.getElementById('fallback-logo').style.display='flex';">
+
+                                                    <!-- Fallback icon -->
+                                                    <div id="fallback-logo"
+                                                        class="d-flex align-items-center justify-content-center bg-secondary text-white rounded shadow-sm mx-auto"
+                                                        style="width: 80px; height: 80px; {{ $brand->logo_url ? 'display: none;' : 'display: flex;' }}">
+                                                        <i class="bi bi-image fs-3"></i>
+                                                    </div>
+                                                </div>
+
+                                                <h6 id="preview-name" class="fw-bold text-dark mb-1">
+                                                    {{ $brand->name ?: 'Nom de la marque' }}
+                                                </h6>
+
+                                                <p id="preview-details" class="text-muted small mb-0">
+                                                    @php
+                                                        $details = [];
+                                                        if ($brand->country)
+                                                            $details[] = $brand->country;
+                                                        if ($brand->founded_year)
+                                                            $details[] = 'Fondée en ' . $brand->founded_year;
+                                                    @endphp
+                                                    {{ implode(' • ', $details) }}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Statistiques de la marque -->
+                                        @if($brand->models->count() > 0)
+                                            <div class="card mt-3">
+                                                <div class="card-body">
+                                                    <h6 class="card-title text-muted mb-3">
+                                                        <i class="bi bi-bar-chart me-1"></i>
+                                                        Statistiques actuelles
+                                                    </h6>
+                                                    <div class="row text-center">
+                                                        <div class="col-6">
+                                                            <div class="border-end">
+                                                                <div class="fw-bold text-primary fs-4">
+                                                                    {{ $brand->models->count() }}</div>
+                                                                <small class="text-muted">Modèles</small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="fw-bold text-success fs-4">
+                                                                {{ $brand->models->where('created_at', '>=', now()->subDays(30))->count() }}
+                                                            </div>
+                                                            <small class="text-muted">Ce mois</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
-                                @if($brand->models()->count() > 0)
-                                    <div class="mt-2">
-                                        <a href="{{ route('admin.models.index', ['brand_id' => $brand->id]) }}"
-                                            class="btn btn-sm btn-outline-info">
-                                            <i class="bi bi-car-front me-1"></i>Voir les modèles
-                                        </a>
-                                    </div>
-                                @endif
                             </div>
-                        </div>
+                        </form>
                     </div>
                 </div>
-
-                <!-- Boutons d'action -->
-                <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-                    <div>
-                        @if($brand->models()->count() == 0)
-                            <form action="{{ route('admin.brands.destroy', $brand) }}" method="POST" class="d-inline"
-                                onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette marque ?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-outline-danger">
-                                    <i class="bi bi-trash me-2"></i>Supprimer
-                                </button>
-                            </form>
-                        @else
-                            <small class="text-muted">
-                                <i class="bi bi-exclamation-triangle me-1"></i>
-                                Impossible de supprimer : cette marque a des modèles associés
-                            </small>
-                        @endif
-                    </div>
-
-                    <div class="d-flex gap-3">
-                        <a href="{{ route('admin.brands.index') }}" class="btn btn-outline-secondary">
-                            <i class="bi bi-x me-2"></i>Annuler
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check me-2"></i>Mettre à jour
-                        </button>
-                    </div>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 
@@ -193,7 +166,7 @@
             const logoUrl = document.getElementById('logo_url').value;
             const foundedYear = document.getElementById('founded_year').value;
 
-            // CORRECTION : Référencer les bons éléments
+            // Référencer les bons éléments
             const previewImage = document.getElementById('preview-image');
             const fallbackLogo = document.getElementById('fallback-logo');
             const previewName = document.getElementById('preview-name');
@@ -208,7 +181,7 @@
             if (foundedYear) details.push(`Fondée en ${foundedYear}`);
             previewDetails.textContent = details.join(' • ');
 
-            // CORRECTION : Gestion de l'affichage image/fallback
+            // Gestion de l'affichage image/fallback
             if (logoUrl && logoUrl.trim() !== '') {
                 console.log('Chargement de l\'image:', logoUrl); // Debug
 
@@ -224,7 +197,6 @@
 
                 previewImage.onerror = function () {
                     console.log('Erreur de chargement de l\'image'); // Debug
-                    // En cas d'erreur, afficher le fallback
                     previewImage.style.display = 'none';
                     fallbackLogo.style.display = 'flex';
                 };
@@ -235,19 +207,8 @@
             }
         }
 
-        // Écouter les changements sur tous les champs
+        // Initialiser la prévisualisation au chargement
         document.addEventListener('DOMContentLoaded', function () {
-            const nameField = document.getElementById('name');
-            const countryField = document.getElementById('country');
-            const logoField = document.getElementById('logo_url');
-            const foundedField = document.getElementById('founded_year');
-
-            if (nameField) nameField.addEventListener('input', updatePreview);
-            if (countryField) countryField.addEventListener('input', updatePreview);
-            if (logoField) logoField.addEventListener('input', updatePreview);
-            if (foundedField) foundedField.addEventListener('input', updatePreview);
-
-            // Prévisualisation initiale
             updatePreview();
         });
     </script>

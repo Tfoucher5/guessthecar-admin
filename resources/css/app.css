@@ -1,119 +1,175 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'bootstrap/scss/bootstrap';
 
-/* ========================================
-   CORRECTIONS CSS POUR LES IMAGES
-   À ajouter dans votre CSS global ou dans les vues
-======================================== */
+/* ====================================
+   FEUILLE DE STYLE PRINCIPALE
+   CarGuesser - Administration
+   ==================================== */
 
-/* 1. IMAGES DANS LES TABLEAUX (logos brands, images models) */
-.table img {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    object-position: center !important;
-    border-radius: 4px;
+/* 1. VARIABLES CUSTOM */
+:root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #0dcaf0;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+
+    --border-radius: 8px;
+    --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
 }
 
-/* Conteneurs spécifiques pour les images de tableaux */
-.img-table-container {
-    width: 50px;
-    height: 50px;
-    overflow: hidden;
-    border-radius: 4px;
-    flex-shrink: 0;
+/* 2. RESET ET BASE */
+* {
+    box-sizing: border-box;
 }
 
-/* 2. IMAGES DANS LES CARDS (brand show, model show) */
-.card img {
-    max-width: 100%;
-    height: auto;
-    object-fit: contain !important;
-    border-radius: 8px;
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: var(--dark-color);
+    background-color: #f8f9fa;
 }
 
-/* Images circulaires (logos brands dans show) */
-.img-circle {
-    width: 120px !important;
-    height: 120px !important;
-    object-fit: cover !important;
-    object-position: center !important;
-    border-radius: 50% !important;
-}
-
-/* 3. PRÉVISUALISATIONS DANS LES FORMULAIRES */
-.preview-container {
-    max-width: 300px;
-    max-height: 200px;
-    overflow: hidden;
-    border-radius: 8px;
-    border: 2px dashed #dee2e6;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.preview-container img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain !important;
-    border-radius: 6px;
-}
-
-/* 4. IMAGES RESPONSIVE DANS LES SESSIONS */
-.session-car-image {
-    width: 40px;
-    height: 40px;
-    object-fit: cover;
-    border-radius: 4px;
-    flex-shrink: 0;
-}
-
-/* 5. AVATARS ET ICÔNES UTILISATEURS */
-.user-avatar {
-    width: 32px;
-    height: 32px;
-    object-fit: cover;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-/* 6. FALLBACKS POUR IMAGES MANQUANTES */
-.img-fallback {
-    background-color: #6c757d;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    font-weight: bold;
-    border-radius: 4px;
-}
-
-.img-fallback.circle {
-    border-radius: 50%;
-}
-
-/* 7. CORRECTIONS SPÉCIFIQUES BOOTSTRAP */
-.img-fluid {
-    max-width: 100% !important;
-    height: auto !important;
-}
-
-.img-thumbnail {
-    max-width: 100% !important;
-    height: auto !important;
-    object-fit: cover !important;
-}
-
-/* 8. CONTAINERS FLEXIBLES */
-.img-container-flex {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* 3. CONTENEURS D'IMAGES - STYLES DE BASE */
+.img-container {
+    position: relative;
     overflow: hidden;
     background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: var(--border-radius);
+}
+
+.img-responsive {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+    transition: var(--transition);
+}
+
+/* 4. IMAGES DANS LES TABLEAUX */
+.img-table-container {
+    width: 60px;
+    height: 60px;
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.img-table {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Fallback pour images manquantes dans tableaux */
+.img-table-fallback {
+    width: 100%;
+    height: 100%;
+    background-color: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    font-size: 1.2rem;
+}
+
+/* 5. IMAGES CIRCULAIRES (AVATARS) */
+.img-circle {
+    width: 100px !important;
+    height: 100px !important;
+    border-radius: 50% !important;
+    object-fit: cover;
+    border: 3px solid #fff;
+    box-shadow: var(--box-shadow);
+}
+
+.img-circle-sm {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    object-fit: cover;
+}
+
+.img-circle-lg {
+    width: 120px !important;
+    height: 120px !important;
+    border-radius: 50% !important;
+    object-fit: cover;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 6. IMAGES DANS LES CARTES */
+.card-img-container {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.card-img:hover {
+    transform: scale(1.05);
+}
+
+/* 7. LOGOS DE MARQUES */
+.brand-logo {
+    max-width: 80px;
+    max-height: 60px;
+    object-fit: contain;
+    padding: 5px;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.brand-logo-sm {
+    max-width: 40px;
+    max-height: 30px;
+    object-fit: contain;
+}
+
+.brand-logo-lg {
+    max-width: 120px;
+    max-height: 90px;
+    object-fit: contain;
+    padding: 10px;
+}
+
+/* 8. IMAGES DE VOITURES */
+.car-image {
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    transition: var(--transition);
+}
+
+.car-image:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+}
+
+.car-image-grid {
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    width: 100%;
+    border-radius: var(--border-radius);
 }
 
 /* 9. IMAGES DANS LE DASHBOARD */
@@ -125,7 +181,59 @@
     flex-shrink: 0;
 }
 
-/* 10. MEDIA QUERIES POUR RESPONSIVE */
+/* Images dans les sessions */
+.session-car-image {
+    width: 24px;
+    height: 24px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+/* 10. GESTION DES ERREURS D'IMAGES */
+.img-error {
+    background-color: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    font-size: 1.5rem;
+    border: 2px dashed #dee2e6;
+}
+
+.img-placeholder {
+    background-color: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* 11. PRÉVISUALISATIONS */
+.preview-container {
+    background-color: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: var(--border-radius);
+    padding: 20px;
+    text-align: center;
+    transition: var(--transition);
+}
+
+.preview-container:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.preview-image {
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+}
+
+/* 12. MEDIA QUERIES POUR RESPONSIVE */
 @media (max-width: 768px) {
     .img-table-container {
         width: 40px;
@@ -138,12 +246,38 @@
     }
 
     .session-car-image {
+        width: 20px;
+        height: 20px;
+    }
+
+    .dashboard-img {
         width: 32px;
         height: 32px;
     }
+
+    .brand-logo {
+        max-width: 60px;
+        max-height: 45px;
+    }
 }
 
-/* 11. ANIMATIONS POUR LE CHARGEMENT */
+@media (max-width: 576px) {
+    .img-circle {
+        width: 60px !important;
+        height: 60px !important;
+    }
+
+    .card-img-container {
+        height: 150px;
+    }
+
+    .brand-logo {
+        max-width: 50px;
+        max-height: 35px;
+    }
+}
+
+/* 13. ANIMATIONS POUR LE CHARGEMENT */
 .img-loading {
     background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
     background-size: 200% 100%;
@@ -160,18 +294,46 @@
     }
 }
 
-/* 12. CORRECTION POUR LES BORDURES ET OMBRES */
+/* 14. EFFETS ET INTERACTIONS */
+.img-hover-effect {
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.img-hover-effect:hover {
+    opacity: 0.8;
+    transform: scale(1.02);
+}
+
+.img-zoom {
+    transition: transform 0.3s ease;
+}
+
+.img-zoom:hover {
+    transform: scale(1.1);
+}
+
+/* 15. BORDURES ET OMBRES */
 .img-styled {
     border: 1px solid #dee2e6;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease;
+    box-shadow: var(--box-shadow);
+    transition: var(--transition);
 }
 
 .img-styled:hover {
-    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
 }
 
-/* 13. CLASSES UTILITAIRES CUSTOM */
+.img-shadow {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.img-shadow-lg {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* 16. CLASSES UTILITAIRES CUSTOM */
 .aspect-ratio-1-1 {
     aspect-ratio: 1 / 1;
 }
@@ -182,6 +344,10 @@
 
 .aspect-ratio-4-3 {
     aspect-ratio: 4 / 3;
+}
+
+.aspect-ratio-3-2 {
+    aspect-ratio: 3 / 2;
 }
 
 /* Force object-fit pour tous les navigateurs */
@@ -198,3 +364,385 @@
 .object-fill {
     object-fit: fill !important;
 }
+
+.object-scale-down {
+    object-fit: scale-down !important;
+    object-position: center !important;
+}
+
+/* 17. IMAGES EN GRILLE */
+.img-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.img-grid-item {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    transition: var(--transition);
+}
+
+.img-grid-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 18. OVERLAYS ET BADGES */
+.img-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(0, 0, 0, 0.5), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.img-container:hover .img-overlay {
+    opacity: 1;
+}
+
+.img-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 10;
+}
+
+/* 19. FILTRES ET EFFETS */
+.img-grayscale {
+    filter: grayscale(100%);
+    transition: filter 0.3s ease;
+}
+
+.img-grayscale:hover {
+    filter: grayscale(0%);
+}
+
+.img-blur {
+    filter: blur(2px);
+    transition: filter 0.3s ease;
+}
+
+.img-blur:hover {
+    filter: blur(0px);
+}
+
+/* 20. ACCESSIBILITÉ */
+.img-accessible {
+    border: 2px solid transparent;
+    transition: border-color 0.2s ease;
+}
+
+.img-accessible:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+}
+
+/* 21. MODES SOMBRE (OPTIONNEL) */
+@media (prefers-color-scheme: dark) {
+    .img-container {
+        background-color: #343a40;
+        border-color: #495057;
+    }
+
+    .img-placeholder {
+        background-color: #495057;
+        color: #adb5bd;
+    }
+
+    .img-error {
+        background-color: #343a40;
+        border-color: #495057;
+        color: #adb5bd;
+    }
+}
+
+/* 22. ÉTATS DE CHARGEMENT AVANCÉS */
+.skeleton-img {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: var(--border-radius);
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* 23. COMPOSANTS SPÉCIALISÉS */
+/* Timeline d'activité */
+.timeline {
+    position: relative;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 16px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+}
+
+.timeline-marker {
+    position: relative;
+    z-index: 1;
+}
+
+/* Cartes de collection */
+.collection-card {
+    transition: var(--transition);
+    border: 1px solid #dee2e6;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.collection-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary-color);
+}
+
+.collection-card .card-img-top {
+    height: 120px;
+    object-fit: cover;
+    background-color: #f8f9fa;
+}
+
+/* Stats cards */
+.stat-card {
+    background: linear-gradient(135deg, var(--primary-color), rgba(13, 110, 253, 0.8));
+    border: none;
+    color: white;
+    overflow: hidden;
+    position: relative;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transform: translate(30px, -30px);
+}
+
+/* 24. COMPOSANTS DE FORMULAIRE */
+.form-img-upload {
+    border: 2px dashed #dee2e6;
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    text-align: center;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.form-img-upload:hover,
+.form-img-upload.dragover {
+    border-color: var(--primary-color);
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.form-img-preview {
+    max-width: 200px;
+    max-height: 150px;
+    object-fit: contain;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    margin: 1rem auto;
+    display: block;
+}
+
+/* 25. TABLEAUX RESPONSIVES */
+.table-img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+@media (max-width: 768px) {
+    .table-responsive .table-img {
+        width: 35px;
+        height: 35px;
+    }
+}
+
+/* 26. BADGES ET INDICATEURS */
+.img-status-badge {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.img-status-badge.online {
+    background-color: var(--success-color);
+}
+
+.img-status-badge.offline {
+    background-color: var(--secondary-color);
+}
+
+.img-status-badge.away {
+    background-color: var(--warning-color);
+}
+
+/* 27. GALERIES ET LIGHTBOX */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.gallery-item {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.gallery-item:hover {
+    transform: scale(1.02);
+}
+
+.gallery-item img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    transition: var(--transition);
+}
+
+.gallery-item:hover img {
+    transform: scale(1.1);
+}
+
+/* 28. NAVIGATION ET MENUS */
+.nav-avatar {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.sidebar-brand-img {
+    max-height: 40px;
+    object-fit: contain;
+}
+
+/* 29. ALERTES ET NOTIFICATIONS */
+.alert-img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+}
+
+/* 30. CORRECTIONS SPÉCIFIQUES */
+/* Correction pour les bordures dans les previews */
+.preview-container img {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+}
+
+/* Correction pour les images manquantes */
+img[src=""],
+img:not([src]) {
+    opacity: 0;
+}
+
+/* Correction pour les conteneurs flexibles */
+.d-flex .img-container {
+    flex-shrink: 0;
+}
+
+/* Correction pour les images dans Bootstrap cards */
+.card .img-container:first-child {
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.card .img-container:last-child {
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+/* 31. UTILITAIRES FINAUX */
+.img-fit-cover {
+    object-fit: cover !important;
+}
+
+.img-fit-contain {
+    object-fit: contain !important;
+}
+
+.img-fit-fill {
+    object-fit: fill !important;
+}
+
+.img-fit-scale {
+    object-fit: scale-down !important;
+}
+
+.img-pos-center {
+    object-position: center !important;
+}
+
+.img-pos-top {
+    object-position: top !important;
+}
+
+.img-pos-bottom {
+    object-position: bottom !important;
+}
+
+.img-pos-left {
+    object-position: left !important;
+}
+
+.img-pos-right {
+    object-position: right !important;
+}
+
+/* Classes pour débugger */
+.debug-img {
+    border: 2px solid red !important;
+}
+
+.debug-container {
+    background-color: rgba(255, 0, 0, 0.1) !important;
+    border: 1px dashed red !important;
+}
+
+/* Fin du fichier CSS */

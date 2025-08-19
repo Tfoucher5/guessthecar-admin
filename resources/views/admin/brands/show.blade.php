@@ -42,7 +42,7 @@
                             <img src="{{ $brand->logo_url }}" 
                                  alt="{{ $brand->name }}"
                                  class="rounded-circle border border-3 border-light shadow"
-                                 style="width: 120px; height: 120px; object-fit: cover;"
+                                 style="width: 120px; height: 120px; object-fit: contain;"
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                             <div class="bg-primary text-white rounded-circle border border-3 border-light shadow d-none align-items-center justify-content-center mx-auto" 
                                  style="width: 120px; height: 120px; font-size: 3rem; font-weight: bold;">

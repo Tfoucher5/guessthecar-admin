@@ -1,284 +1,431 @@
 <x-admin-layout>
-    <x-slot name="title">{{ $userScore->username }} - Détails</x-slot>
-    <x-slot name="header">
-        <div class="d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center">
-                <a href="{{ route('admin.players.index') }}" class="btn btn-outline-secondary me-3">
-                    <i class="bi bi-arrow-left"></i>
-                </a>
-                <div>
-                    <h1 class="h3 mb-1 text-dark">{{ $userScore->username }}</h1>
-                    <p class="text-muted mb-0">Profil détaillé du joueur</p>
-                </div>
-            </div>
-            <div class="d-flex gap-2">
-                <a href="{{ route('admin.players.edit', $userScore) }}" class="btn btn-warning">
-                    <i class="bi bi-pencil"></i> Modifier
-                </a>
-            </div>
-        </div>
-    </x-slot>
+    <div class="container-fluid py-4">
+        <!-- En-tête -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Tableau de bord</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('admin.players.index') }}">Joueurs</a></li>
+                        <li class="breadcrumb-item active">{{ $player->name }}</li>
+                    </ol>
+                </nav>
 
-    <div class="row g-4">
-        <!-- Informations générales -->
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="bi bi-person-circle me-2"></i>
-                        Informations générales
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="text-center mb-4">
-                        <div class="bg-primary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center text-white"
-                            style="width: 80px; height: 80px; font-size: 2rem;">
-                            {{ substr($userScore->username, 0, 1) }}
-                        </div>
-                        <h4 class="mb-1">{{ $userScore->username }}</h4>
-                        <span class="badge {{ $userScore->skill_badge_class }} fs-6">
-                            {{ $userScore->skill_level }}
-                        </span>
-                    </div>
-
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <div class="text-center">
-                                <div class="h4 text-primary mb-0">{{ number_format($userScore->total_points, 0) }}</div>
-                                <div class="small text-muted">Points totaux</div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        @if($player->avatar_url)
+                            <img src="{{ $player->avatar_url }}" 
+                                 alt="{{ $player->name }}" 
+                                 class="rounded-circle me-3"
+                                 style="width: 80px; height: 80px; object-fit: cover;">
+                        @else
+                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3 text-white"
+                                 style="width: 80px; height: 80px;">
+                                <i class="bi bi-person fs-1"></i>
                             </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-center">
-                                <div class="h4 text-success mb-0">{{ $userScore->games_won }}</div>
-                                <div class="small text-muted">Parties gagnées</div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-center">
-                                <div class="h4 text-warning mb-0">{{ $userScore->best_streak }}</div>
-                                <div class="small text-muted">Meilleure série</div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-center">
-                                <div class="h4 text-info mb-0">{{ $userScore->success_rate }}%</div>
-                                <div class="small text-muted">Taux de réussite</div>
-                            </div>
+                        @endif
+                        <div>
+                            <h2 class="mb-1">{{ $player->name }}</h2>
+                            <p class="text-muted mb-0">{{ $player->email }}</p>
+                            <small class="text-muted">
+                                Membre depuis {{ $player->created_at->format('d/m/Y') }}
+                                @if($player->last_login_at)
+                                    • Dernière connexion: {{ $player->last_login_at->diffForHumans() }}
+                                @endif
+                            </small>
                         </div>
                     </div>
 
-                    <hr>
-
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="text-muted">ID Discord</span>
-                        <code class="small">{{ $userScore->user_id }}</code>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('admin.players.edit', $player) }}" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil me-2"></i>Modifier
+                        </a>
+                        @if($player->status === 'active')
+                            <button class="btn btn-outline-warning" onclick="suspendPlayer({{ $player->id }})">
+                                <i class="bi bi-pause me-2"></i>Suspendre
+                            </button>
+                        @else
+                            <button class="btn btn-outline-success" onclick="activatePlayer({{ $player->id }})">
+                                <i class="bi bi-play me-2"></i>Activer
+                            </button>
+                        @endif
                     </div>
-
-                    @if($userScore->guild_id)
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="text-muted">Serveur</span>
-                            <code class="small">{{ substr($userScore->guild_id, 0, 12) }}...</code>
-                        </div>
-                    @endif
-
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="text-muted">Inscription</span>
-                        <span class="small">{{ $userScore->created_at->format('d/m/Y') }}</span>
-                    </div>
-
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted">Dernière activité</span>
-                        <span class="small">{{ $userScore->updated_at->format('d/m/Y H:i') }}</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Statistiques détaillées -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h6 class="mb-0">Statistiques détaillées</h6>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="small text-muted">Précision marques</span>
-                            <span class="small fw-bold">{{ $userScore->brand_accuracy }}%</span>
-                        </div>
-                        <div class="progress" style="height: 6px;">
-                            <div class="progress-bar bg-primary" style="width: {{ $userScore->brand_accuracy }}%"></div>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="small text-muted">Précision modèles</span>
-                            <span class="small fw-bold">{{ $userScore->model_accuracy }}%</span>
-                        </div>
-                        <div class="progress" style="height: 6px;">
-                            <div class="progress-bar bg-success" style="width: {{ $userScore->model_accuracy }}%"></div>
-                        </div>
-                    </div>
-
-                    <hr class="my-3">
-
-                    <div class="row text-center g-3">
-                        <div class="col-6">
-                            <div class="h6 mb-0">{{ $userScore->correct_brand_guesses }}</div>
-                            <div class="small text-muted">Marques trouvées</div>
-                        </div>
-                        <div class="col-6">
-                            <div class="h6 mb-0">{{ $userScore->correct_model_guesses }}</div>
-                            <div class="small text-muted">Modèles trouvés</div>
-                        </div>
-                        <div class="col-6">
-                            <div class="h6 mb-0">{{ $stats['cars_collection_count'] }}</div>
-                            <div class="small text-muted">Voitures collectées</div>
-                        </div>
-                        <div class="col-6">
-                            <div class="h6 mb-0">{{ number_format($stats['points_per_game'], 1) }}</div>
-                            <div class="small text-muted">Points/partie</div>
-                        </div>
-                    </div>
-
-                    @if($userScore->best_time)
-                        <hr class="my-3">
-                        <div class="text-center">
-                            <div class="h6 mb-0">{{ gmdate('i:s', $userScore->best_time) }}</div>
-                            <div class="small text-muted">Meilleur temps</div>
-                        </div>
-                    @endif
                 </div>
             </div>
         </div>
 
-        <!-- Sessions récentes -->
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="bi bi-clock-history me-2"></i>
-                        Sessions récentes
-                    </h5>
-                    <span class="badge bg-primary">{{ $stats['total_sessions'] }} au total</span>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Voiture</th>
-                                    <th>Date</th>
-                                    <th>Durée</th>
-                                    <th>Tentatives</th>
-                                    <th>Statut</th>
-                                    <th>Points</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($sessions as $session)
-                                    <tr>
-                                        <td>
-                                            <div>
-                                                <div class="fw-medium">{{ $session->carModel->brand->name ?? 'N/A' }}</div>
-                                                <div class="small text-muted">{{ $session->carModel->name ?? 'N/A' }}</div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div>{{ $session->started_at->format('d/m/Y') }}</div>
-                                            <div class="small text-muted">{{ $session->started_at->format('H:i') }}</div>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-light text-dark">
-                                                {{ $session->duration_formatted }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="small">
-                                                <div>M: {{ $session->attempts_make }}</div>
-                                                <div>C: {{ $session->attempts_model }}</div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="badge {{ $session->status_badge_class }}">
-                                                {{ $session->status }}
-                                            </span>
-                                        </td>
-                                        <td class="fw-bold">
-                                            {{ $session->points_earned > 0 ? '+' . number_format($session->points_earned, 1) : '0' }}
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="6" class="text-center py-4 text-muted">
-                                            Aucune session trouvée
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+        <!-- Statistiques générales -->
+        <div class="row g-3 mb-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h3 class="mb-0">{{ number_format($stats['total_sessions'] ?? 0) }}</h3>
+                                <p class="mb-0 opacity-75">Sessions totales</p>
+                            </div>
+                            <i class="bi bi-controller fs-1 opacity-50"></i>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Collection de voitures -->
-            <div class="card mt-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="bi bi-collection me-2"></i>
-                        Collection de voitures
-                    </h5>
-                    <span class="badge bg-success">{{ $carsFound->count() }} trouvées</span>
-                </div>
-                <div class="card-body p-0">
-                    @if($carsFound->count() > 0)
-                        <div class="row g-2 p-3">
-                            @foreach($carsFound as $carFound)
-                                <div class="col-md-6">
-                                    <div class="card card-body py-2">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <div class="fw-medium">{{ $carFound->carModel->brand->name }}</div>
-                                                <div class="small text-muted">{{ $carFound->carModel->name }}</div>
-                                            </div>
-                                            <div class="text-end">
-                                                <div class="small text-muted">{{ $carFound->found_at->format('d/m') }}</div>
-                                                @if($carFound->attempts_used > 0)
-                                                    <div class="small text-success">{{ $carFound->attempts_used }} essais</div>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
+            <div class="col-lg-3 col-md-6">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h3 class="mb-0">{{ number_format($stats['best_score'] ?? 0) }}</h3>
+                                <p class="mb-0 opacity-75">Meilleur score</p>
+                            </div>
+                            <i class="bi bi-trophy fs-1 opacity-50"></i>
                         </div>
-                    @else
-                        <div class="text-center py-4 text-muted">
-                            <i class="bi bi-collection fs-1 d-block mb-2"></i>
-                            Aucune voiture dans la collection
-                        </div>
-                    @endif
+                    </div>
                 </div>
             </div>
 
-            <!-- Progression mensuelle -->
-            @if($monthlyProgress->count() > 0)
+            <div class="col-lg-3 col-md-6">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h3 class="mb-0">{{ number_format($stats['cars_found'] ?? 0) }}</h3>
+                                <p class="mb-0 opacity-75">Voitures trouvées</p>
+                            </div>
+                            <i class="bi bi-collection fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h3 class="mb-0">{{ number_format($stats['total_playtime'] ?? 0) }}h</h3>
+                                <p class="mb-0 opacity-75">Temps de jeu</p>
+                            </div>
+                            <i class="bi bi-clock fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Sessions récentes -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history me-2"></i>
+                            Sessions récentes
+                        </h5>
+                        <a href="{{ route('admin.sessions.index', ['user_id' => $player->id]) }}" 
+                           class="btn btn-sm btn-outline-primary">
+                            Voir toutes
+                        </a>
+                    </div>
+                    <div class="card-body p-0">
+                        @if($recentSessions->count() > 0)
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Statut</th>
+                                            <th>Score</th>
+                                            <th>Durée</th>
+                                            <th>Voitures</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($recentSessions as $session)
+                                            <tr>
+                                                <td>
+                                                    <div>{{ $session->started_at ? $session->started_at->format('d/m/Y H:i') : 'N/A' }}</div>
+                                                    @if($session->ended_at)
+                                                        <small class="text-muted">Fin: {{ $session->ended_at->format('H:i') }}</small>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @switch($session->status)
+                                                        @case('active')
+                                                            <span class="badge bg-warning">En cours</span>
+                                                            @break
+                                                        @case('completed')
+                                                            <span class="badge bg-success">Terminée</span>
+                                                            @break
+                                                        @case('abandoned')
+                                                            <span class="badge bg-danger">Abandonnée</span>
+                                                            @break
+                                                        @default
+                                                            <span class="badge bg-secondary">{{ $session->status }}</span>
+                                                    @endswitch
+                                                </td>
+                                                <td>
+                                                    <span class="fw-bold">{{ number_format($session->score ?? 0) }}</span>
+                                                    @if($session->score == $stats['best_score'])
+                                                        <i class="bi bi-star-fill text-warning ms-1" title="Meilleur score"></i>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($session->started_at && $session->ended_at)
+                                                        @php
+                                                            $duration = $session->started_at->diffInMinutes($session->ended_at);
+                                                            $hours = floor($duration / 60);
+                                                            $minutes = $duration % 60;
+                                                        @endphp
+                                                        @if($hours > 0){{ $hours }}h @endif{{ $minutes }}min
+                                                    @else
+                                                        <span class="text-muted">N/A</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($session->found_cars && $session->found_cars->count() > 0)
+                                                        <span class="badge bg-success">{{ $session->found_cars->count() }}</span>
+                                                    @else
+                                                        <span class="text-muted">0</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <div class="text-center py-4 text-muted">
+                                <i class="bi bi-controller fs-1 d-block mb-2"></i>
+                                Aucune session de jeu
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Activité récente -->
                 <div class="card mt-4">
                     <div class="card-header">
                         <h5 class="mb-0">
-                            <i class="bi bi-graph-up me-2"></i>
-                            Progression mensuelle
+                            <i class="bi bi-activity me-2"></i>
+                            Activité récente
                         </h5>
                     </div>
                     <div class="card-body">
-                        <canvas id="progressChart" height="100"></canvas>
+                        @if($recentActivity->count() > 0)
+                            <div class="timeline">
+                                @foreach($recentActivity as $activity)
+                                    <div class="timeline-item d-flex align-items-start mb-3">
+                                        <div class="timeline-marker bg-primary rounded-circle d-flex align-items-center justify-content-center me-3"
+                                             style="width: 32px; height: 32px; min-width: 32px;">
+                                            @switch($activity->type)
+                                                @case('car_found')
+                                                    <i class="bi bi-check text-white small"></i>
+                                                    @break
+                                                @case('session_started')
+                                                    <i class="bi bi-play text-white small"></i>
+                                                    @break
+                                                @case('session_completed')
+                                                    <i class="bi bi-flag text-white small"></i>
+                                                    @break
+                                                @default
+                                                    <i class="bi bi-circle text-white small"></i>
+                                            @endswitch
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <div class="fw-medium">{{ $activity->description }}</div>
+                                                    @if($activity->details)
+                                                        <small class="text-muted">{{ $activity->details }}</small>
+                                                    @endif
+                                                </div>
+                                                <small class="text-muted">{{ $activity->created_at->diffForHumans() }}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-center py-4 text-muted">
+                                <i class="bi bi-activity fs-1 d-block mb-2"></i>
+                                Aucune activité récente
+                            </div>
+                        @endif
                     </div>
                 </div>
-            @endif
+            </div>
+
+            <!-- Sidebar droite -->
+            <div class="col-lg-4">
+                <!-- Collection de voitures -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-collection me-2"></i>
+                            Collection ({{ $collection->count() }})
+                        </h5>
+                        @if($collection->count() > 0)
+                            <span class="badge bg-primary">{{ number_format(($collection->count() / $totalCarsAvailable) * 100, 1) }}%</span>
+                        @endif
+                    </div>
+                    <div class="card-body">
+                        @if($collection->count() > 0)
+                            <div class="row g-2">
+                                @foreach($collection->take(12) as $carFound)
+                                    <div class="col-4">
+                                        <div class="card border-0 bg-light">
+                                            <div class="card-body p-2 text-center">
+                                                @if($carFound->car_model && $carFound->car_model->image_url)
+                                                    <img src="{{ $carFound->car_model->image_url }}" 
+                                                         alt="{{ $carFound->car_model->name }}" 
+                                                         class="img-fluid rounded mb-1"
+                                                         style="max-height: 40px; object-fit: contain;">
+                                                @else
+                                                    <div class="bg-secondary rounded d-flex align-items-center justify-content-center mb-1"
+                                                         style="height: 40px;">
+                                                        <i class="bi bi-car-front-fill text-white"></i>
+                                                    </div>
+                                                @endif
+                                                <div class="small fw-medium">{{ $carFound->car_model->brand->name ?? 'Marque' }}</div>
+                                                <div class="small text-muted">{{ $carFound->car_model->name ?? 'Modèle' }}</div>
+                                                <div class="text-end">
+                                                    <div class="small text-muted">{{ $carFound->found_at->format('d/m') }}</div>
+                                                    @if($carFound->attempts_used > 0)
+                                                        <div class="small text-success">{{ $carFound->attempts_used }} essais</div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                                @if($collection->count() > 12)
+                                    <div class="col-12 text-center mt-2">
+                                        <small class="text-muted">Et {{ $collection->count() - 12 }} autres voitures...</small>
+                                    </div>
+                                @endif
+                            </div>
+                        @else
+                            <div class="text-center py-4 text-muted">
+                                <i class="bi bi-collection fs-1 d-block mb-2"></i>
+                                Aucune voiture dans la collection
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Statistiques détaillées -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-bar-chart me-2"></i>
+                            Statistiques détaillées
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <div class="h5 mb-0 text-primary">{{ number_format($stats['avg_score'] ?? 0) }}</div>
+                                    <small class="text-muted">Score moyen</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <div class="h5 mb-0 text-success">{{ number_format($stats['completion_rate'] ?? 0, 1) }}%</div>
+                                    <small class="text-muted">Taux de complétion</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <div class="h5 mb-0 text-warning">{{ number_format($stats['avg_session_time'] ?? 0) }}min</div>
+                                    <small class="text-muted">Durée moy. session</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <div class="h5 mb-0 text-info">{{ number_format($stats['sessions_this_week'] ?? 0) }}</div>
+                                    <small class="text-muted">Cette semaine</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Répartition par difficulté -->
+                        <h6 class="mb-3">Voitures par difficulté</h6>
+                        @foreach(['1' => 'Facile', '2' => 'Moyen', '3' => 'Difficile'] as $level => $label)
+                            @php
+                                $count = $collection->where('car_model.difficulty_level', $level)->count();
+                                $total = $collection->count();
+                                $percentage = $total > 0 ? ($count / $total) * 100 : 0;
+                            @endphp
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="small">{{ $label }}</span>
+                                <div class="d-flex align-items-center">
+                                    <div class="progress me-2" style="width: 80px; height: 8px;">
+                                        <div class="progress-bar bg-{{ $level == 1 ? 'success' : ($level == 2 ? 'warning' : 'danger') }}" 
+                                             style="width: {{ $percentage }}%"></div>
+                                    </div>
+                                    <span class="small text-muted">{{ $count }}</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <!-- Actions rapides -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-lightning me-2"></i>
+                            Actions rapides
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" onclick="sendMessage({{ $player->id }})">
+                                <i class="bi bi-envelope me-2"></i>Envoyer un message
+                            </button>
+                            <button class="btn btn-outline-info" onclick="resetProgress({{ $player->id }})">
+                                <i class="bi bi-arrow-clockwise me-2"></i>Réinitialiser progression
+                            </button>
+                            <button class="btn btn-outline-warning" onclick="exportData({{ $player->id }})">
+                                <i class="bi bi-download me-2"></i>Exporter données
+                            </button>
+                            @if($player->status === 'active')
+                                <button class="btn btn-outline-danger" onclick="suspendPlayer({{ $player->id }})">
+                                    <i class="bi bi-ban me-2"></i>Suspendre compte
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <!-- Progression mensuelle -->
+        @if($monthlyProgress->count() > 0)
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="bi bi-graph-up me-2"></i>
+                                Progression mensuelle
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="progressChart" height="100"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 
     @push('scripts')
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
         <script>
             @if($monthlyProgress->count() > 0)
                 document.addEventListener('DOMContentLoaded', function () {
@@ -291,33 +438,44 @@
                         data: {
                             labels: progressData.map(item => item.month),
                             datasets: [{
-                                label: 'Parties jouées',
-                                data: progressData.map(item => item.games_count),
-                                borderColor: '#3b82f6',
-                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                label: 'Voitures trouvées',
+                                data: progressData.map(item => item.cars_found),
+                                borderColor: 'rgb(75, 192, 192)',
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
                                 tension: 0.4
                             }, {
-                                label: 'Points gagnés',
-                                data: progressData.map(item => item.points_earned),
-                                borderColor: '#10b981',
-                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                label: 'Score moyen',
+                                data: progressData.map(item => item.avg_score),
+                                borderColor: 'rgb(255, 99, 132)',
+                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
                                 tension: 0.4,
                                 yAxisID: 'y1'
                             }]
                         },
                         options: {
                             responsive: true,
-                            maintainAspectRatio: false,
+                            interaction: {
+                                mode: 'index',
+                                intersect: false,
+                            },
                             scales: {
                                 y: {
                                     type: 'linear',
                                     display: true,
                                     position: 'left',
+                                    title: {
+                                        display: true,
+                                        text: 'Voitures trouvées'
+                                    }
                                 },
                                 y1: {
                                     type: 'linear',
                                     display: true,
                                     position: 'right',
+                                    title: {
+                                        display: true,
+                                        text: 'Score moyen'
+                                    },
                                     grid: {
                                         drawOnChartArea: false,
                                     },
@@ -327,6 +485,87 @@
                     });
                 });
             @endif
+
+            function sendMessage(playerId) {
+                // Implémenter l'envoi de message
+                alert('Fonctionnalité à implémenter : Envoi de message');
+            }
+
+            function resetProgress(playerId) {
+                if (confirm('Êtes-vous sûr de vouloir réinitialiser toute la progression de ce joueur ? Cette action est irréversible.')) {
+                    fetch(`/admin/players/${playerId}/reset-progress`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Erreur lors de la réinitialisation');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                        alert('Erreur lors de la réinitialisation');
+                    });
+                }
+            }
+
+            function exportData(playerId) {
+                window.open(`/admin/players/${playerId}/export`, '_blank');
+            }
+
+            function suspendPlayer(playerId) {
+                if (confirm('Êtes-vous sûr de vouloir suspendre ce joueur ?')) {
+                    fetch(`/admin/players/${playerId}/suspend`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Erreur lors de la suspension');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                        alert('Erreur lors de la suspension');
+                    });
+                }
+            }
+
+            function activatePlayer(playerId) {
+                if (confirm('Êtes-vous sûr de vouloir réactiver ce joueur ?')) {
+                    fetch(`/admin/players/${playerId}/activate`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Erreur lors de l\'activation');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                        alert('Erreur lors de l\'activation');
+                    });
+                }
+            }
         </script>
     @endpush
 </x-admin-layout>
