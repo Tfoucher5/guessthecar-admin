@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,9 +10,10 @@ class UserScore extends Model
 
     protected $fillable = [
         'user_id',
+        'guild_id',
         'username',
         'total_points',
-        'difficulty_points',
+        'total_difficulty_points',
         'games_played',
         'games_won',
         'correct_brand_guesses',
@@ -27,8 +27,10 @@ class UserScore extends Model
     ];
 
     protected $casts = [
+        'user_id' => 'string',
+        'guild_id' => 'string',
         'total_points' => 'decimal:2',
-        'difficulty_points' => 'decimal:2',
+        'total_difficulty_points' => 'decimal:2',
         'games_played' => 'integer',
         'games_won' => 'integer',
         'correct_brand_guesses' => 'integer',
@@ -48,27 +50,67 @@ class UserScore extends Model
         return $this->hasMany(GameSession::class, 'user_id', 'user_id');
     }
 
-    public function getWinRateAttribute()
+    public function userCarsFound()
+    {
+        return $this->hasMany(UserCarFound::class, 'user_id', 'user_id');
+    }
+
+    public function getSuccessRateAttribute()
     {
         return $this->games_played > 0
-            ? round(($this->games_won / $this->games_played) * 100, 2)
+            ? round(($this->games_won / $this->games_played) * 100, 1)
             : 0;
     }
 
-    public function getAverageTimeAttribute()
+    public function getBrandAccuracyAttribute()
     {
-        return $this->games_played > 0 && $this->best_time
-            ? round($this->best_time / $this->games_played, 2)
+        return $this->total_brand_guesses > 0
+            ? round(($this->correct_brand_guesses / $this->total_brand_guesses) * 100, 1)
             : 0;
     }
 
-    public function getTotalPointsAllAttribute()
+    public function getModelAccuracyAttribute()
     {
-        return $this->total_points + $this->difficulty_points;
+        return $this->total_model_guesses > 0
+            ? round(($this->correct_model_guesses / $this->total_model_guesses) * 100, 1)
+            : 0;
+    }
+
+    public function getSkillLevelAttribute()
+    {
+        if ($this->total_points >= 100)
+            return 'Expert';
+        if ($this->total_points >= 50)
+            return 'Avancé';
+        if ($this->total_points >= 20)
+            return 'Intermédiaire';
+        if ($this->total_points >= 10)
+            return 'Apprenti';
+        return 'Débutant';
+    }
+
+    public function getSkillBadgeClassAttribute()
+    {
+        $classes = [
+            'Expert' => 'bg-primary',
+            'Avancé' => 'bg-success',
+            'Intermédiaire' => 'bg-warning',
+            'Apprenti' => 'bg-info',
+            'Débutant' => 'bg-secondary'
+        ];
+
+        return $classes[$this->skill_level] ?? 'bg-secondary';
     }
 
     public function scopeTopPlayers($query, $limit = 10)
     {
-        return $query->orderBy('total_points', 'desc')->limit($limit);
+        return $query->orderBy('total_points', 'desc')
+            ->orderBy('games_won', 'desc')
+            ->limit($limit);
+    }
+
+    public function scopeByGuild($query, $guildId)
+    {
+        return $query->where('guild_id', $guildId);
     }
 }

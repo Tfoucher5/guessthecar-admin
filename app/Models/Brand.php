@@ -1,5 +1,6 @@
 <?php
 
+// app/Models/Brand.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,12 +12,13 @@ class Brand extends Model
 
     protected $fillable = [
         'name',
-        'logo_url',
-        'country'
+        'country',
+        'logo_url'
     ];
 
     protected $casts = [
-        'created_at' => 'datetime'
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
     ];
 
     public function models()
@@ -29,8 +31,36 @@ class Brand extends Model
         return $this->hasManyThrough(GameSession::class, CarModel::class, 'brand_id', 'car_id');
     }
 
+    public function userCarsFound()
+    {
+        return $this->hasMany(UserCarFound::class);
+    }
+
     public function scopeWithModelCount($query)
     {
         return $query->withCount('models');
+    }
+
+    public function scopeByCountry($query, $country)
+    {
+        return $query->where('country', $country);
+    }
+
+    public function getCountryFlagAttribute()
+    {
+        $flags = [
+            'France' => '🇫🇷',
+            'Germany' => '🇩🇪',
+            'Italy' => '🇮🇹',
+            'Japan' => '🇯🇵',
+            'USA' => '🇺🇸',
+            'UK' => '🇬🇧',
+            'South Korea' => '🇰🇷',
+            'Sweden' => '🇸🇪',
+            'Czech Republic' => '🇨🇿',
+            'Inconnu' => '🌍'
+        ];
+
+        return $flags[$this->country] ?? '🌍';
     }
 }
