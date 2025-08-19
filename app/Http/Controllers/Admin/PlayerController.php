@@ -5,10 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\UserScore;
 use App\Models\GameSession;
-use App\Models\UserCarFound;
-use App\Models\LeaderboardView;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\CarModel;
 
 class PlayerController extends Controller
 {
@@ -295,5 +294,292 @@ class PlayerController extends Controller
         ];
 
         return response()->json($data, 200, $headers);
+    }
+
+    /**
+     * Afficher la liste des sessions de jeu
+     */
+    public function sessions(Request $request)
+    {
+        $query = GameSession::with(['userScore', 'carModel.brand']);
+
+        // Filtres
+        if ($request->filled('status')) {
+            switch ($request->status) {
+                case 'active':
+                    $query->where('completed', false)->where('abandoned', false);
+                    break;
+                case 'completed':
+                    $query->where('completed', true);
+                    break;
+                case 'abandoned':
+                    $query->where('abandoned', true);
+                    break;
+            }
+        }
+
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        if ($request->filled('car_id')) {
+            $query->where('car_id', $request->car_id);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->where('started_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->where('started_at', '<=', $request->date_to . ' 23:59:59');
+        }
+
+        // Tri
+        $sortField = $request->get('sort', 'started_at');
+        $sortDirection = $request->get('direction', 'desc');
+
+        if (in_array($sortField, ['started_at', 'points_earned', 'duration_seconds'])) {
+            $query->orderBy($sortField, $sortDirection);
+        } else {
+            $query->orderBy('started_at', 'desc');
+        }
+
+        $sessions = $query->paginate(20)->withQueryString();
+
+        // Données pour les filtres
+        $users = UserScore::select('user_id', 'username')
+            ->whereHas('gameSessions')
+            ->orderBy('username')
+            ->get();
+
+        $cars = CarModel::with('brand')
+            ->whereHas('gameSessions')
+            ->orderBy('name')
+            ->get();
+
+        // Statistiques
+        $stats = [
+            'total' => GameSession::count(),
+            'active' => GameSession::where('completed', false)->where('abandoned', false)->count(),
+            'completed' => GameSession::where('completed', true)->count(),
+            'abandoned' => GameSession::where('abandoned', true)->count(),
+            'today' => GameSession::whereDate('started_at', today())->count(),
+            'avg_duration' => GameSession::whereNotNull('duration_seconds')->avg('duration_seconds') ?? 0,
+        ];
+
+        return view('admin.sessions.index', compact('sessions', 'users', 'cars', 'stats'));
+    }
+
+    /**
+     * Afficher une session spécifique
+     */
+    public function sessionShow(GameSession $gameSession)
+    {
+        $gameSession->load([
+            'userScore',
+            'carModel.brand',
+            'userCarFound'
+        ]);
+
+        // Historique des actions de cette session (simulation)
+        $sessionHistory = collect([
+            [
+                'action' => 'session_started',
+                'description' => 'Session démarrée',
+                'timestamp' => $gameSession->started_at,
+                'details' => 'Voiture: ' . ($gameSession->carModel->brand->name ?? 'N/A') . ' ' . ($gameSession->carModel->name ?? 'N/A')
+            ]
+        ]);
+
+        if ($gameSession->completed) {
+            $sessionHistory->push([
+                'action' => 'session_completed',
+                'description' => 'Session terminée avec succès',
+                'timestamp' => $gameSession->completed_at ?? $gameSession->updated_at,
+                'details' => 'Points gagnés: ' . ($gameSession->points_earned ?? 0)
+            ]);
+        }
+
+        if ($gameSession->userCarFound) {
+            $sessionHistory->push([
+                'action' => 'car_found',
+                'description' => 'Voiture trouvée',
+                'timestamp' => $gameSession->userCarFound->found_at,
+                'details' => 'Tentatives utilisées: ' . $gameSession->userCarFound->attempts_used
+            ]);
+        }
+
+        $sessionHistory = $sessionHistory->sortBy('timestamp');
+
+        // Statistiques de la session
+        $sessionStats = [
+            'duration' => $gameSession->duration_seconds,
+            'duration_formatted' => $gameSession->duration_seconds
+                ? gmdate('H:i:s', $gameSession->duration_seconds)
+                : 'En cours',
+            'attempts_used' => $gameSession->userCarFound->attempts_used ?? 0,
+            'points_earned' => $gameSession->points_earned ?? 0,
+            'success' => $gameSession->completed && $gameSession->userCarFound,
+        ];
+
+        return view('admin.sessions.show', compact('gameSession', 'sessionHistory', 'sessionStats'));
+    }
+
+    /**
+     * Supprimer une session
+     */
+    public function sessionDestroy(GameSession $gameSession)
+    {
+        try {
+            // Supprimer les données liées si nécessaire
+            if ($gameSession->userCarFound) {
+                $gameSession->userCarFound->delete();
+            }
+
+            $gameSession->delete();
+
+            return redirect()
+                ->route('admin.sessions.index')
+                ->with('success', 'Session supprimée avec succès.');
+
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('admin.sessions.index')
+                ->with('error', 'Erreur lors de la suppression de la session.');
+        }
+    }
+
+    /**
+     * Terminer une session active
+     */
+    public function endSession(GameSession $gameSession)
+    {
+        if ($gameSession->completed || $gameSession->abandoned) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cette session est déjà terminée.'
+            ]);
+        }
+
+        $gameSession->update([
+            'completed' => false,
+            'abandoned' => true,
+            'completed_at' => now(),
+            'duration_seconds' => now()->diffInSeconds($gameSession->started_at)
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Session terminée avec succès.'
+        ]);
+    }
+
+    /**
+     * Réinitialiser une session
+     */
+    public function resetSession(GameSession $gameSession)
+    {
+        $gameSession->update([
+            'completed' => false,
+            'abandoned' => false,
+            'completed_at' => null,
+            'points_earned' => 0,
+            'duration_seconds' => null
+        ]);
+
+        // Supprimer la voiture trouvée associée si elle existe
+        if ($gameSession->userCarFound) {
+            $gameSession->userCarFound->delete();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Session réinitialisée avec succès.'
+        ]);
+    }
+
+    /**
+     * Export des sessions en CSV
+     */
+    public function exportSessions(Request $request)
+    {
+        $query = GameSession::with(['userScore', 'carModel.brand']);
+
+        // Appliquer les mêmes filtres que l'index
+        if ($request->filled('status')) {
+            switch ($request->status) {
+                case 'active':
+                    $query->where('completed', false)->where('abandoned', false);
+                    break;
+                case 'completed':
+                    $query->where('completed', true);
+                    break;
+                case 'abandoned':
+                    $query->where('abandoned', true);
+                    break;
+            }
+        }
+
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->where('started_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->where('started_at', '<=', $request->date_to . ' 23:59:59');
+        }
+
+        $sessions = $query->orderBy('started_at', 'desc')->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="sessions_export_' . date('Y-m-d') . '.csv"',
+        ];
+
+        $callback = function () use ($sessions) {
+            $file = fopen('php://output', 'w');
+
+            fputcsv($file, [
+                'ID',
+                'Joueur',
+                'Voiture (Marque)',
+                'Voiture (Modèle)',
+                'Statut',
+                'Points Gagnés',
+                'Durée (secondes)',
+                'Date de Début',
+                'Date de Fin',
+                'Serveur'
+            ]);
+
+            foreach ($sessions as $session) {
+                $status = 'En cours';
+                if ($session->completed) {
+                    $status = 'Terminée';
+                } elseif ($session->abandoned) {
+                    $status = 'Abandonnée';
+                }
+
+                fputcsv($file, [
+                    $session->id,
+                    $session->userScore->username ?? 'Inconnu',
+                    $session->carModel->brand->name ?? 'N/A',
+                    $session->carModel->name ?? 'N/A',
+                    $status,
+                    $session->points_earned ?? 0,
+                    $session->duration_seconds ?? 0,
+                    $session->started_at->format('Y-m-d H:i:s'),
+                    $session->completed_at ? $session->completed_at->format('Y-m-d H:i:s') : '',
+                    $session->guild_id ?? ''
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

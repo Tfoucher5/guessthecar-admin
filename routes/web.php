@@ -53,6 +53,11 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
 
     // Classement global
     Route::get('leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
+    Route::get('leaderboard/guilds', [LeaderboardController::class, 'guilds'])->name('leaderboard.guilds');
+    Route::get('leaderboard/cars', [LeaderboardController::class, 'cars'])->name('leaderboard.cars');
+    Route::get('leaderboard/records', [LeaderboardController::class, 'records'])->name('leaderboard.records');
+    Route::get('leaderboard/export', [LeaderboardController::class, 'export'])->name('leaderboard.export');
+    Route::get('leaderboard/api', [LeaderboardController::class, 'api'])->name('leaderboard.api');
 
     // Voitures trouvées / Collection
     Route::get('cars-found', [CarsFoundController::class, 'index'])->name('cars-found.index');

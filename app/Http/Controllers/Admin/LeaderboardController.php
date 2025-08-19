@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\UserScore;
 use App\Models\LeaderboardView;
 use App\Models\GameSession;
+use App\Models\UserCarFound;
+use App\Models\Brand;
+use App\Models\CarModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -40,6 +43,10 @@ class LeaderboardController extends Controller
             }
         }
 
+        if ($request->filled('min_points')) {
+            $query->where('total_points', '>=', $request->min_points);
+        }
+
         // Tri par défaut : points totaux
         $sortField = $request->get('sort', 'total_points');
         $sortDirection = $request->get('direction', 'desc');
@@ -64,8 +71,8 @@ class LeaderboardController extends Controller
             'active_players' => UserScore::whereHas('gameSessions', function ($q) {
                 $q->where('started_at', '>=', now()->subDays(7));
             })->count(),
-            'top_score' => UserScore::max('total_points'),
-            'avg_score' => UserScore::avg('total_points'),
+            'top_score' => UserScore::max('total_points') ?? 0,
+            'avg_score' => UserScore::avg('total_points') ?? 0,
         ];
 
         // Guildes pour les filtres
@@ -80,50 +87,37 @@ class LeaderboardController extends Controller
 
     public function show(UserScore $player)
     {
-        return redirect()->route('admin.players.show', $player);
+        return redirect()->route('admin.players.show', $player)
+            ->with('info', 'Redirection vers le profil détaillé du joueur.');
     }
 
     /**
-     * Classement par guildes
+     * Classement par guildes/serveurs
      */
     public function guilds(Request $request)
     {
-        $query = DB::table('user_scores')
-            ->selectRaw('
+        $guilds = UserScore::selectRaw('
                 guild_id,
-                COUNT(*) as players_count,
+                COUNT(*) as total_players,
                 SUM(total_points) as total_points,
                 AVG(total_points) as avg_points,
                 SUM(games_played) as total_games,
                 SUM(games_won) as total_wins,
-                MAX(total_points) as best_player_score
+                MAX(total_points) as best_player_score,
+                COUNT(CASE WHEN total_points >= 100 THEN 1 END) as experts,
+                COUNT(CASE WHEN total_points >= 50 AND total_points < 100 THEN 1 END) as advanced
             ')
             ->whereNotNull('guild_id')
-            ->groupBy('guild_id');
+            ->groupBy('guild_id')
+            ->orderBy('avg_points', 'desc')
+            ->paginate(20);
 
-        // Filtres
-        if ($request->filled('min_players')) {
-            $query->having('players_count', '>=', $request->min_players);
-        }
-
-        // Tri
-        $sortField = $request->get('sort', 'total_points');
-        $sortDirection = $request->get('direction', 'desc');
-
-        if (in_array($sortField, ['total_points', 'avg_points', 'players_count', 'total_games'])) {
-            $query->orderBy($sortField, $sortDirection);
-        } else {
-            $query->orderBy('total_points', 'desc');
-        }
-
-        $guilds = $query->paginate(20)->withQueryString();
-
-        // Ajouter le rang à chaque guilde
-        $guilds->getCollection()->transform(function ($guild, $key) use ($guilds) {
-            $guild->rank = ($guilds->currentPage() - 1) * $guilds->perPage() + $key + 1;
-            $guild->success_rate = $guild->total_games > 0
+        // Calculer le taux de victoire pour chaque guilde
+        $guilds->getCollection()->transform(function ($guild) {
+            $guild->win_rate = $guild->total_games > 0
                 ? round(($guild->total_wins / $guild->total_games) * 100, 1)
                 : 0;
+            $guild->rank = 0; // Sera calculé dans la vue
             return $guild;
         });
 
@@ -131,28 +125,30 @@ class LeaderboardController extends Controller
     }
 
     /**
-     * Classement par voitures les plus trouvées
+     * Classement par voitures les plus trouvées - CORRIGÉ
      */
     public function cars(Request $request)
     {
         $query = DB::table('user_cars_found')
-            ->join('car_models', 'user_cars_found.car_id', '=', 'car_models.id')
-            ->join('brands', 'car_models.brand_id', '=', 'brands.id')
+            ->join('models', 'user_cars_found.car_id', '=', 'models.id')  // CORRIGÉ: models au lieu de car_models
+            ->join('brands', 'models.brand_id', '=', 'brands.id')
             ->selectRaw('
-                car_models.id,
-                car_models.name as model_name,
+                models.id,
+                models.name as model_name,
                 brands.name as brand_name,
                 brands.logo_url,
-                car_models.difficulty_level,
+                models.difficulty_level,
+                models.image_url,
                 COUNT(*) as found_count,
                 AVG(user_cars_found.attempts_used) as avg_attempts,
-                MIN(user_cars_found.found_at) as first_found
+                MIN(user_cars_found.found_at) as first_found,
+                COUNT(DISTINCT user_cars_found.user_id) as unique_finders
             ')
-            ->groupBy('car_models.id', 'car_models.name', 'brands.name', 'brands.logo_url', 'car_models.difficulty_level');
+            ->groupBy('models.id', 'models.name', 'brands.name', 'brands.logo_url', 'models.difficulty_level', 'models.image_url');
 
         // Filtres
         if ($request->filled('difficulty')) {
-            $query->where('car_models.difficulty_level', $request->difficulty);
+            $query->where('models.difficulty_level', $request->difficulty);
         }
 
         if ($request->filled('brand_id')) {
@@ -170,7 +166,7 @@ class LeaderboardController extends Controller
         });
 
         // Données pour les filtres
-        $brands = \App\Models\Brand::orderBy('name')->get();
+        $brands = Brand::orderBy('name')->get();
 
         return view('admin.leaderboard.cars', compact('cars', 'brands'));
     }
@@ -183,19 +179,19 @@ class LeaderboardController extends Controller
         $records = [
             'highest_score' => [
                 'player' => UserScore::orderBy('total_points', 'desc')->first(),
-                'value' => UserScore::max('total_points')
+                'value' => UserScore::max('total_points') ?? 0
             ],
             'most_games' => [
                 'player' => UserScore::orderBy('games_played', 'desc')->first(),
-                'value' => UserScore::max('games_played')
+                'value' => UserScore::max('games_played') ?? 0
             ],
             'best_streak' => [
                 'player' => UserScore::orderBy('best_streak', 'desc')->first(),
-                'value' => UserScore::max('best_streak')
+                'value' => UserScore::max('best_streak') ?? 0
             ],
             'most_cars_found' => [
                 'player' => UserScore::withCount('userCarsFound')->orderBy('user_cars_found_count', 'desc')->first(),
-                'value' => UserScore::withCount('userCarsFound')->max('user_cars_found_count')
+                'value' => UserScore::withCount('userCarsFound')->max('user_cars_found_count') ?? 0
             ],
             'fastest_session' => [
                 'session' => GameSession::with(['userScore', 'carModel.brand'])
@@ -203,7 +199,7 @@ class LeaderboardController extends Controller
                     ->whereNotNull('duration_seconds')
                     ->orderBy('duration_seconds', 'asc')
                     ->first(),
-                'value' => GameSession::where('completed', true)->min('duration_seconds')
+                'value' => GameSession::where('completed', true)->min('duration_seconds') ?? 0
             ],
             'longest_session' => [
                 'session' => GameSession::with(['userScore', 'carModel.brand'])
@@ -211,7 +207,7 @@ class LeaderboardController extends Controller
                     ->whereNotNull('duration_seconds')
                     ->orderBy('duration_seconds', 'desc')
                     ->first(),
-                'value' => GameSession::where('completed', true)->max('duration_seconds')
+                'value' => GameSession::where('completed', true)->max('duration_seconds') ?? 0
             ]
         ];
 
@@ -242,6 +238,30 @@ class LeaderboardController extends Controller
             $query->where('guild_id', $request->guild_id);
         }
 
+        if ($request->filled('period')) {
+            switch ($request->period) {
+                case 'week':
+                    $query->whereHas('gameSessions', function ($q) {
+                        $q->where('started_at', '>=', now()->subWeek());
+                    });
+                    break;
+                case 'month':
+                    $query->whereHas('gameSessions', function ($q) {
+                        $q->where('started_at', '>=', now()->subMonth());
+                    });
+                    break;
+                case 'year':
+                    $query->whereHas('gameSessions', function ($q) {
+                        $q->where('started_at', '>=', now()->subYear());
+                    });
+                    break;
+            }
+        }
+
+        if ($request->filled('min_points')) {
+            $query->where('total_points', '>=', $request->min_points);
+        }
+
         $players = $query->orderBy('total_points', 'desc')->get();
 
         $headers = [
@@ -253,18 +273,23 @@ class LeaderboardController extends Controller
             $file = fopen('php://output', 'w');
 
             fputcsv($file, [
-                'Rank',
+                'Rang',
                 'Username',
                 'Guild ID',
                 'Total Points',
-                'Games Played',
-                'Games Won',
-                'Success Rate',
-                'Best Streak',
-                'Current Streak'
+                'Parties Jouées',
+                'Parties Gagnées',
+                'Taux de Réussite (%)',
+                'Meilleure Série',
+                'Série Actuelle',
+                'Date Inscription'
             ]);
 
             foreach ($players as $index => $player) {
+                $successRate = $player->games_played > 0
+                    ? round(($player->games_won / $player->games_played) * 100, 1)
+                    : 0;
+
                 fputcsv($file, [
                     $index + 1,
                     $player->username,
@@ -272,9 +297,10 @@ class LeaderboardController extends Controller
                     $player->total_points,
                     $player->games_played,
                     $player->games_won,
-                    $player->success_rate . '%',
+                    $successRate,
                     $player->best_streak,
-                    $player->current_streak
+                    $player->current_streak,
+                    $player->created_at->format('Y-m-d H:i:s')
                 ]);
             }
 
@@ -285,23 +311,27 @@ class LeaderboardController extends Controller
     }
 
     /**
-     * API pour récupérer le top 10
+     * API pour les mises à jour en temps réel
      */
-    public function api()
+    public function api(Request $request)
     {
         $topPlayers = UserScore::orderBy('total_points', 'desc')
             ->limit(10)
-            ->get()
-            ->map(function ($player, $index) {
-                return [
-                    'rank' => $index + 1,
-                    'username' => $player->username,
-                    'total_points' => $player->total_points,
-                    'games_played' => $player->games_played,
-                    'success_rate' => $player->success_rate
-                ];
-            });
+            ->get(['username', 'total_points', 'games_played', 'games_won']);
 
-        return response()->json($topPlayers);
+        $stats = [
+            'total_players' => UserScore::count(),
+            'active_players' => UserScore::whereHas('gameSessions', function ($q) {
+                $q->where('started_at', '>=', now()->subDays(7));
+            })->count(),
+            'top_score' => UserScore::max('total_points') ?? 0,
+            'avg_score' => round(UserScore::avg('total_points') ?? 0, 1),
+        ];
+
+        return response()->json([
+            'top_players' => $topPlayers,
+            'stats' => $stats,
+            'updated_at' => now()->toISOString(),
+        ]);
     }
 }

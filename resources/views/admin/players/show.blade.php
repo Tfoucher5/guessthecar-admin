@@ -28,7 +28,7 @@
                             <h2 class="mb-1">{{ $player->name }}</h2>
                             <p class="text-muted mb-0">{{ $player->email }}</p>
                             <small class="text-muted">
-                                Membre depuis {{ $player->created_at->format('d/m/Y') }}
+                                Membre depuis {{ \Carbon\Carbon::parse($player->created_at)->format('d/m/Y') }}
                                 @if($player->last_login_at)
                                     • Dernière connexion: {{ $player->last_login_at->diffForHumans() }}
                                 @endif

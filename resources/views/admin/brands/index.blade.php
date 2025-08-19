@@ -167,10 +167,6 @@
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <a href="{{ route('admin.brands.show', $brand) }}"
-                                                class="btn btn-outline-info btn-sm" title="Voir détails">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
                                             <a href="{{ route('admin.brands.edit', $brand) }}"
                                                 class="btn btn-outline-warning btn-sm" title="Modifier">
                                                 <i class="bi bi-pencil"></i>

@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\CarModel;
+use App\Models\GameSession;
+use App\Models\UserCarFound;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class CarModelController extends Controller
 {
@@ -123,12 +126,26 @@ class CarModelController extends Controller
 
         // Statistiques du modèle
         $stats = [
-            'times_found' => $model->user_found_cars()->count(),
+            'times_found' => UserCarFound::where('car_id', $model->id)->count(),
+            'total_sessions' => GameSession::where('car_id', $model->id)->count(),
             'success_rate' => $this->calculateSuccessRate($model),
             'average_attempts' => $this->calculateAverageAttempts($model),
+            'fastest_time' => UserCarFound::where('car_id', $model->id)
+                ->whereNotNull('time_taken')
+                ->min('time_taken'),
+            'slowest_time' => UserCarFound::where('car_id', $model->id)
+                ->whereNotNull('time_taken')
+                ->max('time_taken'),
         ];
 
-        return view('admin.models.show', compact('model', 'stats'));
+        // Récentes trouvailles
+        $recentFinds = UserCarFound::where('car_id', $model->id)
+            ->with('userScore')
+            ->orderBy('found_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        return view('admin.models.show', compact('model', 'stats', 'recentFinds'));
     }
 
     /**
@@ -192,24 +209,34 @@ class CarModelController extends Controller
      */
     public function destroy(CarModel $model)
     {
-        // Vérifier s'il y a des données liées
-        if ($model->user_found_cars()->count() > 0) {
+        try {
+            // Vérifier s'il y a des données liées
+            $hasGameSessions = GameSession::where('car_id', $model->id)->exists();
+            $hasUserFound = UserCarFound::where('car_id', $model->id)->exists();
+
+            if ($hasGameSessions || $hasUserFound) {
+                return redirect()
+                    ->route('admin.models.index')
+                    ->with('error', 'Impossible de supprimer un modèle qui a été utilisé dans des sessions de jeu ou trouvé par des utilisateurs.');
+            }
+
+            $model->delete();
+
             return redirect()
                 ->route('admin.models.index')
-                ->with('error', 'Impossible de supprimer un modèle qui a été trouvé par des utilisateurs.');
+                ->with('success', 'Modèle supprimé avec succès.');
+
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('admin.models.index')
+                ->with('error', 'Erreur lors de la suppression du modèle.');
         }
-
-        $model->delete();
-
-        return redirect()
-            ->route('admin.models.index')
-            ->with('success', 'Modèle supprimé avec succès.');
     }
 
     /**
      * API pour récupérer les modèles d'une marque (pour AJAX)
      */
-    public function getByBrand(Request $request, $brandId)
+    public function getByBrand($brandId)
     {
         $models = CarModel::where('brand_id', $brandId)
             ->orderBy('name')
@@ -229,57 +256,138 @@ class CarModelController extends Controller
             'models.*.name' => 'required|string|max:255',
             'models.*.year' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),
             'models.*.difficulty_level' => 'required|integer|in:1,2,3',
+            'models.*.image_url' => 'nullable|url|max:500',
         ]);
 
+        $brandId = $request->brand_id;
+        $modelsData = $request->models;
         $created = 0;
         $skipped = 0;
 
-        foreach ($request->models as $modelData) {
-            $modelData['brand_id'] = $request->brand_id;
+        DB::beginTransaction();
 
-            // Vérifier les doublons
-            $exists = CarModel::where('name', $modelData['name'])
-                ->where('brand_id', $modelData['brand_id'])
-                ->exists();
+        try {
+            foreach ($modelsData as $modelData) {
+                // Vérifier si le modèle existe déjà
+                $exists = CarModel::where('name', $modelData['name'])
+                    ->where('brand_id', $brandId)
+                    ->exists();
 
-            if (!$exists) {
-                CarModel::create($modelData);
-                $created++;
-            } else {
-                $skipped++;
+                if (!$exists) {
+                    CarModel::create([
+                        'name' => $modelData['name'],
+                        'brand_id' => $brandId,
+                        'year' => $modelData['year'] ?? null,
+                        'difficulty_level' => $modelData['difficulty_level'],
+                        'image_url' => $modelData['image_url'] ?? null,
+                    ]);
+                    $created++;
+                } else {
+                    $skipped++;
+                }
             }
-        }
 
-        $message = "Import terminé : {$created} modèles créés";
-        if ($skipped > 0) {
-            $message .= ", {$skipped} modèles ignorés (doublons)";
-        }
+            DB::commit();
 
-        return redirect()
-            ->route('admin.models.index')
-            ->with('success', $message);
+            return redirect()
+                ->route('admin.models.index')
+                ->with('success', "Import terminé : $created modèle(s) créé(s), $skipped ignoré(s) (doublons).");
+
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            return redirect()
+                ->route('admin.models.index')
+                ->with('error', 'Erreur lors de l\'import : ' . $e->getMessage());
+        }
     }
 
     /**
-     * Calcul du taux de réussite
+     * Export des modèles en CSV
+     */
+    public function export(Request $request)
+    {
+        $query = CarModel::with('brand');
+
+        // Appliquer les mêmes filtres que l'index
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                    ->orWhereHas('brand', function ($brandQuery) use ($request) {
+                        $brandQuery->where('name', 'like', '%' . $request->search . '%');
+                    });
+            });
+        }
+
+        if ($request->filled('brand_id')) {
+            $query->where('brand_id', $request->brand_id);
+        }
+
+        if ($request->filled('difficulty_level')) {
+            $query->where('difficulty_level', $request->difficulty_level);
+        }
+
+        $models = $query->orderBy('name')->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="car_models_export_' . date('Y-m-d') . '.csv"',
+        ];
+
+        $callback = function () use ($models) {
+            $file = fopen('php://output', 'w');
+
+            fputcsv($file, [
+                'ID',
+                'Nom',
+                'Marque',
+                'Année',
+                'Difficulté',
+                'URL Image',
+                'Date de création'
+            ]);
+
+            foreach ($models as $model) {
+                fputcsv($file, [
+                    $model->id,
+                    $model->name,
+                    $model->brand->name ?? 'N/A',
+                    $model->year,
+                    $model->difficulty_level,
+                    $model->image_url,
+                    $model->created_at->format('Y-m-d H:i:s')
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Calculer le taux de succès pour un modèle
      */
     private function calculateSuccessRate(CarModel $model)
     {
-        // À implémenter selon votre logique métier
-        $totalAttempts = $model->user_found_cars()->sum('attempts_used') ?? 0;
-        $successfulFinds = $model->user_found_cars()->count();
+        $totalSessions = GameSession::where('car_id', $model->id)->count();
 
-        if ($totalAttempts == 0)
+        if ($totalSessions == 0) {
             return 0;
+        }
 
-        return round(($successfulFinds / $totalAttempts) * 100, 1);
+        $successfulSessions = UserCarFound::where('car_id', $model->id)->count();
+
+        return round(($successfulSessions / $totalSessions) * 100, 2);
     }
 
     /**
-     * Calcul de la moyenne des tentatives
+     * Calculer le nombre moyen de tentatives pour un modèle
      */
     private function calculateAverageAttempts(CarModel $model)
     {
-        return $model->user_found_cars()->avg('attempts_used') ?? 0;
+        $avgAttempts = UserCarFound::where('car_id', $model->id)->avg('attempts_used');
+
+        return $avgAttempts ? round($avgAttempts, 2) : 0;
     }
 }

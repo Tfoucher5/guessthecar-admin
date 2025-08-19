@@ -10,6 +10,7 @@ use App\Models\GameSession;
 use App\Models\UserCarFound;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -24,14 +25,15 @@ class DashboardController extends Controller
             'active_games' => GameSession::where('completed', false)->where('abandoned', false)->count(),
             'completed_games' => GameSession::where('completed', true)->count(),
             'total_cars_found' => UserCarFound::count(),
-            'total_points_earned' => UserScore::sum('total_points')
+            'total_points_earned' => UserScore::sum('total_points') ?? 0
         ];
 
         // Répartition par difficulté
         $difficultyStats = CarModel::selectRaw('difficulty_level, COUNT(*) as count')
             ->groupBy('difficulty_level')
             ->get()
-            ->pluck('count', 'difficulty_level');
+            ->pluck('count', 'difficulty_level')
+            ->toArray();
 
         // Répartition par pays des marques
         $countryStats = Brand::selectRaw('country, COUNT(*) as count')
@@ -46,15 +48,15 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        // Marques les plus populaires (par nombre de sessions)
+        // Marques les plus populaires (par nombre de sessions) - CORRIGÉ
         $topBrands = Brand::selectRaw('
                 brands.id,
                 brands.name,
                 brands.logo_url,
                 COUNT(game_sessions.id) as sessions_count
             ')
-            ->join('car_models', 'brands.id', '=', 'car_models.brand_id')
-            ->join('game_sessions', 'car_models.id', '=', 'game_sessions.car_id')
+            ->leftJoin('models', 'brands.id', '=', 'models.brand_id')  // CORRIGÉ: models au lieu de car_models
+            ->leftJoin('game_sessions', 'models.id', '=', 'game_sessions.car_id')
             ->groupBy('brands.id', 'brands.name', 'brands.logo_url')
             ->orderBy('sessions_count', 'desc')
             ->limit(5)
@@ -69,66 +71,75 @@ class DashboardController extends Controller
         // Statistiques par mois (6 derniers mois)
         $monthlyStats = GameSession::selectRaw('
                 DATE_FORMAT(started_at, "%Y-%m") as month,
-                COUNT(*) as games_count,
-                SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END) as completed_count,
-                AVG(IFNULL(duration_seconds, 0)) as avg_duration,
-                SUM(IFNULL(points_earned, 0)) as total_points
+                COUNT(*) as sessions_count,
+                COUNT(DISTINCT user_id) as unique_players,
+                SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END) as completed_sessions
             ')
             ->where('started_at', '>=', now()->subMonths(6))
             ->groupBy('month')
             ->orderBy('month')
             ->get();
 
-        // Voitures les plus trouvées
+        // Voitures les plus trouvées - CORRIGÉ
         $mostFoundCars = UserCarFound::selectRaw('
                 car_id,
-                COUNT(*) as found_count
+                COUNT(*) as found_count,
+                AVG(attempts_used) as avg_attempts
             ')
             ->with(['carModel.brand'])
             ->groupBy('car_id')
             ->orderBy('found_count', 'desc')
-            ->limit(10)
+            ->limit(5)
             ->get();
 
-        // Activité récente (dernières 24h)
+        // Activité récente
         $recentActivity = collect();
 
-        // Nouvelles sessions
-        GameSession::where('started_at', '>=', now()->subDay())
-            ->with(['userScore', 'carModel.brand'])
-            ->get()
-            ->each(function ($session) use ($recentActivity) {
-                $recentActivity->push([
-                    'type' => 'session_started',
-                    'message' => $session->userScore->username . ' a commencé une session',
-                    'details' => ($session->carModel->brand->name ?? '') . ' ' . ($session->carModel->name ?? ''),
-                    'time' => $session->started_at,
-                    'icon' => 'bi-play-circle'
-                ]);
-            });
+        // Ajouter les voitures récemment trouvées
+        $recentCarsFound = UserCarFound::with(['userScore', 'carModel.brand'])
+            ->orderBy('found_at', 'desc')
+            ->limit(5)
+            ->get();
 
-        // Voitures trouvées récemment
-        UserCarFound::where('found_at', '>=', now()->subDay())
-            ->with(['userScore', 'carModel.brand'])
-            ->get()
-            ->each(function ($carFound) use ($recentActivity) {
-                $recentActivity->push([
-                    'type' => 'car_found',
-                    'message' => $carFound->userScore->username . ' a trouvé une voiture',
-                    'details' => ($carFound->carModel->brand->name ?? '') . ' ' . ($carFound->carModel->name ?? ''),
-                    'time' => $carFound->found_at,
-                    'icon' => 'bi-star-fill'
-                ]);
-            });
+        foreach ($recentCarsFound as $carFound) {
+            $recentActivity->push([
+                'type' => 'car_found',
+                'icon' => 'bi-trophy',
+                'color' => 'success',
+                'message' => ($carFound->userScore->username ?? 'Joueur inconnu') . ' a trouvé',
+                'details' => ($carFound->carModel->brand->name ?? 'Marque') . ' ' . ($carFound->carModel->name ?? 'Modèle'),
+                'time' => $carFound->found_at,
+                'time_human' => $carFound->found_at->diffForHumans(),
+            ]);
+        }
 
-        $recentActivity = $recentActivity->sortByDesc('time')->take(15);
+        // Ajouter les nouveaux joueurs
+        $newPlayers = UserScore::orderBy('created_at', 'desc')
+            ->limit(3)
+            ->get();
 
-        // Statistiques d'aujourd'hui
+        foreach ($newPlayers as $player) {
+            $recentActivity->push([
+                'type' => 'new_player',
+                'icon' => 'bi-person-plus',
+                'color' => 'primary',
+                'message' => 'Nouveau joueur inscrit',
+                'details' => $player->username,
+                'time' => $player->created_at,
+                'time_human' => $player->created_at->diffForHumans(),
+            ]);
+        }
+
+        // Trier par date
+        $recentActivity = $recentActivity->sortByDesc('time')->take(10);
+
+        // Statistiques du jour
         $todayStats = [
             'sessions' => GameSession::whereDate('started_at', today())->count(),
+            'completed_sessions' => GameSession::whereDate('started_at', today())
+                ->where('completed', true)->count(),
             'new_players' => UserScore::whereDate('created_at', today())->count(),
             'cars_found' => UserCarFound::whereDate('found_at', today())->count(),
-            'points_earned' => GameSession::whereDate('started_at', today())->sum('points_earned') ?? 0
         ];
 
         // Données pour les graphiques
@@ -154,6 +165,23 @@ class DashboardController extends Controller
     }
 
     /**
+     * API pour vérifier le statut de l'API Discord (simulation)
+     */
+    public function apiStatus()
+    {
+        // Simulation du statut de l'API
+        $status = [
+            'discord_api' => 'online',
+            'database' => 'online',
+            'cache' => 'online',
+            'storage' => 'online',
+            'last_check' => now()->toISOString(),
+        ];
+
+        return response()->json($status);
+    }
+
+    /**
      * API pour récupérer les statistiques en temps réel
      */
     public function stats()
@@ -165,6 +193,8 @@ class DashboardController extends Controller
                 ->count(),
             'sessions_today' => GameSession::whereDate('started_at', today())->count(),
             'cars_found_today' => UserCarFound::whereDate('found_at', today())->count(),
+            'total_players' => UserScore::count(),
+            'total_points' => UserScore::sum('total_points') ?? 0,
         ];
 
         return response()->json($stats);
@@ -175,16 +205,25 @@ class DashboardController extends Controller
      */
     private function getSessionsByHour()
     {
-        return GameSession::selectRaw('
+        $data = [];
+        for ($i = 0; $i < 24; $i++) {
+            $data[$i] = 0;
+        }
+
+        $sessions = GameSession::selectRaw('
                 HOUR(started_at) as hour,
                 COUNT(*) as count
             ')
             ->whereDate('started_at', today())
             ->groupBy('hour')
             ->orderBy('hour')
-            ->get()
-            ->pluck('count', 'hour')
-            ->toArray();
+            ->get();
+
+        foreach ($sessions as $session) {
+            $data[$session->hour] = $session->count;
+        }
+
+        return $data;
     }
 
     /**
@@ -215,7 +254,8 @@ class DashboardController extends Controller
         if ($yesterdaySessions > 0 && $todaySessions < ($yesterdaySessions * 0.5)) {
             $notifications[] = [
                 'type' => 'info',
-                'message' => "Baisse d'activité détectée (-" . round((1 - $todaySessions / $yesterdaySessions) * 100) . "%)",
+                'message' => "Baisse d'activité détectée (-" .
+                    round((1 - $todaySessions / $yesterdaySessions) * 100) . "%)",
                 'action' => route('admin.statistics.index')
             ];
         }
