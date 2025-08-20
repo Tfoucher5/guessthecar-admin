@@ -1,6 +1,5 @@
 <?php
 
-// routes/web.php
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CarModelController;
@@ -59,10 +58,19 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::get('leaderboard/export', [LeaderboardController::class, 'export'])->name('leaderboard.export');
     Route::get('leaderboard/api', [LeaderboardController::class, 'api'])->name('leaderboard.api');
 
-    // Voitures trouvées / Collection
-    Route::get('cars-found', [CarsFoundController::class, 'index'])->name('cars-found.index');
-    Route::get('cars-found/{userCarFound}', [CarsFoundController::class, 'show'])->name('cars-found.show');
-    Route::get('cars-found-statistics', [CarsFoundController::class, 'statistics'])->name('cars-found.statistics');
+    // Voitures trouvées / Collections
+    Route::prefix('cars-found')->name('cars-found.')->group(function () {
+        Route::get('/', [CarsFoundController::class, 'index'])->name('index');
+        Route::get('create', [CarsFoundController::class, 'create'])->name('create');
+        Route::post('/', [CarsFoundController::class, 'store'])->name('store');
+        Route::get('statistics', [CarsFoundController::class, 'statistics'])->name('statistics'); // AVANT {id}
+        Route::get('export', [CarsFoundController::class, 'export'])->name('export');
+        Route::post('bulk-delete', [CarsFoundController::class, 'bulkDelete'])->name('bulk-delete');
+        Route::get('api/recent', [CarsFoundController::class, 'recent'])->name('api.recent');
+        Route::get('api/search', [CarsFoundController::class, 'search'])->name('api.search');
+        Route::get('{id}', [CarsFoundController::class, 'show'])->name('show'); // APRÈS statistics
+        Route::delete('{id}', [CarsFoundController::class, 'destroy'])->name('destroy');
+    });
 
     // Statistiques avancées
     Route::get('statistics', function () {
@@ -71,26 +79,20 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
 
     // Outils d'administration
     Route::prefix('tools')->name('tools.')->group(function () {
-        Route::get('database-status', function () {
-            return view('admin.tools.database-status');
-        })->name('database-status');
-
-        Route::get('system-info', function () {
-            return view('admin.tools.system-info');
-        })->name('system-info');
-
-        Route::post('clear-cache', function () {
+        Route::get('cache-clear', function () {
             \Artisan::call('cache:clear');
             \Artisan::call('config:clear');
             \Artisan::call('view:clear');
-            return back()->with('success', 'Cache vidé avec succès');
-        })->name('clear-cache');
+            return redirect()->back()->with('success', 'Cache vidé avec succès');
+        })->name('cache.clear');
+
+        Route::get('optimize', function () {
+            \Artisan::call('optimize');
+            return redirect()->back()->with('success', 'Application optimisée avec succès');
+        })->name('optimize');
     });
 
-});
-
-// Profile routes (Breeze)
-Route::middleware('auth')->group(function () {
+    // Profile utilisateur admin
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

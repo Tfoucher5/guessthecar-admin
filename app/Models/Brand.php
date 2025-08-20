@@ -46,21 +46,41 @@ class Brand extends Model
         return $query->where('country', $country);
     }
 
+    /**
+     * Obtenir l'emoji drapeau du pays
+     */
     public function getCountryFlagAttribute()
     {
         $flags = [
             'France' => '🇫🇷',
-            'Germany' => '🇩🇪',
-            'Italy' => '🇮🇹',
-            'Japan' => '🇯🇵',
-            'USA' => '🇺🇸',
-            'UK' => '🇬🇧',
-            'South Korea' => '🇰🇷',
-            'Sweden' => '🇸🇪',
-            'Czech Republic' => '🇨🇿',
-            'Inconnu' => '🌍'
+            'Allemagne' => '🇩🇪',
+            'Italie' => '🇮🇹',
+            'Espagne' => '🇪🇸',
+            'Royaume-Uni' => '🇬🇧',
+            'États-Unis' => '🇺🇸',
+            'Japon' => '🇯🇵',
+            'Corée du Sud' => '🇰🇷',
+            'Chine' => '🇨🇳',
+            'Suède' => '🇸🇪',
+            'Norvège' => '🇳🇴',
+            'Pays-Bas' => '🇳🇱',
+            'Belgique' => '🇧🇪',
+            'Suisse' => '🇨🇭',
+            'Autriche' => '🇦🇹',
+            'République tchèque' => '🇨🇿',
+            'Pologne' => '🇵🇱',
+            'Russie' => '🇷🇺',
+            'Inde' => '🇮🇳',
+            'Brésil' => '🇧🇷',
+            'Canada' => '🇨🇦',
+            'Australie' => '🇦🇺',
+            'Roumanie' => '🇷🇴',
+            'Malaisie' => '🇲🇾',
         ];
 
         return $flags[$this->country] ?? '🌍';
     }
+
+    // Puis dans les vues, vous pourrez utiliser :
+// {{ $brand->country_flag }}
 }

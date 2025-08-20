@@ -123,6 +123,16 @@
                             <i class="bi bi-controller me-1"></i> Sessions
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin.cars-found.*') ? 'active' : '' }}"
+                            href="{{ route('admin.cars-found.index') }}">
+                            <i class="bi bi-collection"></i>
+                            <span>Collections</span>
+                            @if(isset($stats) && $stats['today'] > 0)
+                                <span class="badge bg-success ms-auto">{{ $stats['today'] }}</span>
+                            @endif
+                        </a>
+                    </li>
                     @if(Route::has('admin.users.index'))
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}"

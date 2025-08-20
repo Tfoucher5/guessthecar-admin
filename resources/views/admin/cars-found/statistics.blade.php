@@ -1,367 +1,3 @@
-{{-- resources/views/admin/leaderboard/index.blade.php --}}
-<x-admin-layout>
-    <x-slot name="title">Classement général</x-slot>
-    <x-slot name="header">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h1 class="h3 mb-1 text-dark">Classement général</h1>
-                <p class="text-muted mb-0">{{ $leaderboard->total() }} joueurs classés</p>
-            </div>
-            <div class="d-flex gap-2">
-                <a href="{{ route('admin.cars-found.statistics') }}" class="btn btn-outline-primary">
-                    <i class="bi bi-graph-up"></i> Statistiques
-                </a>
-            </div>
-        </div>
-    </x-slot>
-
-    <!-- Filtres -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="GET" class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Recherche</label>
-                    <input type="text" class="form-control" name="search" value="{{ request('search') }}"
-                        placeholder="Nom du joueur...">
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">Niveau de compétence</label>
-                    <select class="form-select" name="skill_level">
-                        <option value="">Tous les niveaux</option>
-                        @foreach($skillLevels as $level)
-                            <option value="{{ $level }}" {{ request('skill_level') === $level ? 'selected' : '' }}>
-                                {{ $level }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label">Rang minimum</label>
-                    <input type="number" class="form-control" name="rank_from" value="{{ request('rank_from') }}"
-                        placeholder="1">
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label">Rang maximum</label>
-                    <input type="number" class="form-control" name="rank_to" value="{{ request('rank_to') }}"
-                        placeholder="100">
-                </div>
-
-                <div class="col-md-1 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-search"></i>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Classement -->
-    <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">
-                <i class="bi bi-trophy me-2"></i>
-                Classement des joueurs
-            </h5>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>Rang</th>
-                            <th>Joueur</th>
-                            <th>Points</th>
-                            <th>Parties</th>
-                            <th>Taux de réussite</th>
-                            <th>Tentatives moy.</th>
-                            <th>Temps moyen</th>
-                            <th>Niveau</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($leaderboard as $player)
-                            <tr class="{{ $player->ranking <= 3 ? 'table-warning' : '' }}">
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        @if($player->ranking == 1)
-                                            <span class="badge bg-warning text-dark fs-6">🥇 #{{ $player->ranking }}</span>
-                                        @elseif($player->ranking == 2)
-                                            <span class="badge bg-secondary fs-6">🥈 #{{ $player->ranking }}</span>
-                                        @elseif($player->ranking == 3)
-                                            <span class="badge bg-warning text-dark fs-6">🥉 #{{ $player->ranking }}</span>
-                                        @else
-                                            <span class="badge bg-primary">#{{ $player->ranking }}</span>
-                                        @endif
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center text-white"
-                                            style="width: 32px; height: 32px; font-size: 0.8rem;">
-                                            {{ substr($player->username, 0, 1) }}
-                                        </div>
-                                        <div>
-                                            <div class="fw-medium">{{ $player->username }}</div>
-                                            @if($player->current_streak > 0)
-                                                <div class="small text-success">
-                                                    🔥 {{ $player->current_streak }} série
-                                                </div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div>
-                                        <div class="fw-bold text-primary">{{ number_format($player->total_points, 0) }}
-                                        </div>
-                                        @if($player->total_difficulty_points > 0)
-                                            <div class="small text-muted">
-                                                +{{ number_format($player->total_difficulty_points, 0) }} bonus
-                                            </div>
-                                        @endif
-                                    </div>
-                                </td>
-                                <td>
-                                    <div>
-                                        <span class="fw-medium">{{ $player->games_played }}</span>
-                                        <span class="text-muted">/ {{ $player->games_won }} gagnées</span>
-                                    </div>
-                                    @if($player->best_streak > 0)
-                                        <div class="small text-warning">
-                                            ⭐ {{ $player->best_streak }} record
-                                        </div>
-                                    @endif
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="progress me-2" style="width: 50px; height: 8px;">
-                                            <div class="progress-bar bg-success"
-                                                style="width: {{ $player->success_rate }}%"></div>
-                                        </div>
-                                        <span class="small fw-medium">{{ $player->success_rate }}%</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="badge bg-light text-dark">
-                                        {{ number_format($player->average_attempts, 1) }}
-                                    </span>
-                                </td>
-                                <td>
-                                    @if($player->average_time_seconds > 0)
-                                        <span class="badge bg-info">
-                                            {{ gmdate('i:s', $player->average_time_seconds) }}
-                                        </span>
-                                    @else
-                                        <span class="text-muted">N/A</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <span class="badge {{ $player->skill_badge_class }}">
-                                        {{ $player->skill_level }}
-                                    </span>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="8" class="text-center py-5">
-                                    <div class="text-muted">
-                                        <i class="bi bi-trophy fs-1 d-block mb-2"></i>
-                                        Aucun joueur dans le classement
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        @if($leaderboard->hasPages())
-            <div class="card-footer">
-                {{ $leaderboard->links() }}
-            </div>
-        @endif
-    </div>
-</x-admin-layout>
-
-{{-- resources/views/admin/cars-found/index.blade.php --}}
-<x-admin-layout>
-    <x-slot name="title">Collections de voitures</x-slot>
-    <x-slot name="header">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h1 class="h3 mb-1 text-dark">Collections de voitures</h1>
-                <p class="text-muted mb-0">{{ $carsFound->total() }} voitures trouvées</p>
-            </div>
-            <div class="d-flex gap-2">
-                <a href="{{ route('admin.cars-found.statistics') }}" class="btn btn-primary">
-                    <i class="bi bi-graph-up"></i> Statistiques
-                </a>
-            </div>
-        </div>
-    </x-slot>
-
-    <!-- Filtres -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="GET" class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label">Recherche</label>
-                    <input type="text" class="form-control" name="search" value="{{ request('search') }}"
-                        placeholder="Joueur, marque, modèle...">
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">Marque</label>
-                    <select class="form-select" name="brand_id">
-                        <option value="">Toutes les marques</option>
-                        @foreach($brands as $brand)
-                            <option value="{{ $brand->id }}" {{ request('brand_id') == $brand->id ? 'selected' : '' }}>
-                                {{ $brand->country_flag }} {{ $brand->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label">Serveur</label>
-                    <select class="form-select" name="guild_id">
-                        <option value="">Tous</option>
-                        @foreach($guilds as $guild)
-                            <option value="{{ $guild->guild_id }}" {{ request('guild_id') === $guild->guild_id ? 'selected' : '' }}>
-                                {{ substr($guild->guild_id, 0, 8) }}... ({{ $guild->cars_count }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label">Date début</label>
-                    <input type="date" class="form-control" name="date_from" value="{{ request('date_from') }}">
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label">Date fin</label>
-                    <input type="date" class="form-control" name="date_to" value="{{ request('date_to') }}">
-                </div>
-            </form>
-            <div class="row mt-3">
-                <div class="col-12">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-search"></i> Filtrer
-                    </button>
-                    <a href="{{ route('admin.cars-found.index') }}" class="btn btn-outline-secondary ms-2">
-                        <i class="bi bi-x-circle"></i> Réinitialiser
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Liste des voitures trouvées -->
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-                <i class="bi bi-collection me-2"></i>
-                Voitures trouvées
-            </h5>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>Joueur</th>
-                            <th>Voiture</th>
-                            <th>Marque</th>
-                            <th>Date de découverte</th>
-                            <th>Tentatives</th>
-                            <th>Temps</th>
-                            <th>Serveur</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($carsFound as $carFound)
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="bg-secondary rounded-circle me-2 d-flex align-items-center justify-content-center text-white"
-                                            style="width: 24px; height: 24px; font-size: 0.7rem;">
-                                            {{ substr($carFound->userScore->username ?? 'U', 0, 1) }}
-                                        </div>
-                                        <span>{{ $carFound->userScore->username ?? 'Utilisateur inconnu' }}</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div>
-                                        <div class="fw-medium">{{ $carFound->carModel->name ?? 'N/A' }}</div>
-                                        <div class="small text-muted">
-                                            {{ $carFound->carModel->year ?? 'N/A' }} •
-                                            <span
-                                                class="badge {{ $carFound->carModel->difficulty_badge_class ?? 'bg-secondary' }}">
-                                                {{ $carFound->carModel->difficulty_text ?? 'N/A' }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="me-2">{{ $carFound->brand->country_flag ?? '🌍' }}</span>
-                                        <div>
-                                            <div class="fw-medium">{{ $carFound->brand->name ?? 'N/A' }}</div>
-                                            <div class="small text-muted">{{ $carFound->brand->country ?? 'N/A' }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div>{{ $carFound->found_at->format('d/m/Y') }}</div>
-                                    <div class="small text-muted">{{ $carFound->found_at->format('H:i') }}</div>
-                                </td>
-                                <td>
-                                    <span
-                                        class="badge {{ $carFound->attempts_used <= 3 ? 'bg-success' : ($carFound->attempts_used <= 5 ? 'bg-warning' : 'bg-danger') }}">
-                                        {{ $carFound->attempts_used }} essais
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-info">
-                                        {{ $carFound->time_taken_formatted }}
-                                    </span>
-                                </td>
-                                <td>
-                                    @if($carFound->guild_id)
-                                        <code class="small">{{ substr($carFound->guild_id, 0, 8) }}...</code>
-                                    @else
-                                        <span class="text-muted">N/A</span>
-                                    @endif
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center py-5">
-                                    <div class="text-muted">
-                                        <i class="bi bi-collection fs-1 d-block mb-2"></i>
-                                        Aucune voiture trouvée
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        @if($carsFound->hasPages())
-            <div class="card-footer">
-                {{ $carsFound->links() }}
-            </div>
-        @endif
-    </div>
-</x-admin-layout>
-
 {{-- resources/views/admin/cars-found/statistics.blade.php --}}
 <x-admin-layout>
     <x-slot name="title">Statistiques des collections</x-slot>
@@ -375,63 +11,122 @@
                 <a href="{{ route('admin.cars-found.index') }}" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-left"></i> Retour
                 </a>
+                <a href="{{ route('admin.cars-found.export') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-download"></i> Exporter
+                </a>
             </div>
         </div>
     </x-slot>
 
     <!-- Statistiques générales -->
     <div class="row g-4 mb-4">
-        <div class="col-xl-3 col-lg-6">
-            <div class="stat-card" style="border-left-color: #3b82f6;">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="stat-label">Total trouvées</div>
-                        <div class="stat-value text-primary">{{ number_format($stats['total_found']) }}</div>
-                    </div>
-                    <div class="bg-primary bg-opacity-10 rounded-3 p-3">
-                        <i class="bi bi-collection text-primary fs-4"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-lg-6">
-            <div class="stat-card" style="border-left-color: #10b981;">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="stat-label">Voitures uniques</div>
-                        <div class="stat-value text-success">{{ number_format($stats['unique_cars']) }}</div>
-                    </div>
-                    <div class="bg-success bg-opacity-10 rounded-3 p-3">
-                        <i class="bi bi-car-front text-success fs-4"></i>
+        <div class="col-xl-2 col-lg-4 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-primary bg-opacity-10 rounded-3 p-3">
+                                <i class="bi bi-collection text-primary fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="fs-6 text-muted">Total trouvées</div>
+                            <div class="fs-4 fw-bold text-primary">{{ number_format($generalStats['total_found']) }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-lg-6">
-            <div class="stat-card" style="border-left-color: #f59e0b;">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="stat-label">Collectionneurs</div>
-                        <div class="stat-value text-warning">{{ number_format($stats['unique_players']) }}</div>
-                    </div>
-                    <div class="bg-warning bg-opacity-10 rounded-3 p-3">
-                        <i class="bi bi-people text-warning fs-4"></i>
+        <div class="col-xl-2 col-lg-4 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-success bg-opacity-10 rounded-3 p-3">
+                                <i class="bi bi-people text-success fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="fs-6 text-muted">Collectionneurs</div>
+                            <div class="fs-4 fw-bold text-success">{{ number_format($generalStats['unique_players']) }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-lg-6">
-            <div class="stat-card" style="border-left-color: #8b5cf6;">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="stat-label">Tentatives moy.</div>
-                        <div class="stat-value text-info">{{ number_format($stats['average_attempts'], 1) }}</div>
+        <div class="col-xl-2 col-lg-4 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-info bg-opacity-10 rounded-3 p-3">
+                                <i class="bi bi-car-front text-info fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="fs-6 text-muted">Voitures trouvées</div>
+                            <div class="fs-4 fw-bold text-info">{{ number_format($generalStats['unique_cars']) }}</div>
+                        </div>
                     </div>
-                    <div class="bg-info bg-opacity-10 rounded-3 p-3">
-                        <i class="bi bi-target text-info fs-4"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-lg-4 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-warning bg-opacity-10 rounded-3 p-3">
+                                <i class="bi bi-target text-warning fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="fs-6 text-muted">Tentatives moy.</div>
+                            <div class="fs-4 fw-bold text-warning">
+                                {{ number_format($generalStats['average_attempts'], 1) }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-lg-4 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-purple bg-opacity-10 rounded-3 p-3">
+                                <i class="bi bi-speedometer text-purple fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="fs-6 text-muted">Voitures totales</div>
+                            <div class="fs-4 fw-bold text-purple">
+                                {{ number_format($generalStats['total_cars_available']) }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-lg-4 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-dark bg-opacity-10 rounded-3 p-3">
+                                <i class="bi bi-percent text-dark fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="fs-6 text-muted">Complétude</div>
+                            <div class="fs-4 fw-bold text-dark">{{ $generalStats['completion_rate'] }}%</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -445,26 +140,37 @@
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="bi bi-star me-2"></i>
-                        Voitures les plus trouvées
+                        Top 10 - Voitures les plus trouvées
                     </h5>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-sm mb-0">
-                            <thead>
+                            <thead class="table-light">
                                 <tr>
+                                    <th>#</th>
                                     <th>Voiture</th>
                                     <th>Trouvée</th>
                                     <th>Tentatives moy.</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($mostFoundCars as $car)
+                                @foreach($mostFoundCars->take(10) as $index => $car)
                                     <tr>
                                         <td>
-                                            <div class="small">
-                                                <div class="fw-medium">{{ $car->carModel->brand->name ?? 'N/A' }}</div>
-                                                <div class="text-muted">{{ $car->carModel->name ?? 'N/A' }}</div>
+                                            <span class="badge {{ $index < 3 ? 'bg-warning' : 'bg-secondary' }}">
+                                                {{ $index + 1 }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <div class="fw-medium">{{ $car->carModel->name ?? 'N/A' }}</div>
+                                                <div class="small text-muted">
+                                                    {{ $car->carModel->brand->name ?? 'N/A' }}
+                                                    @if($car->carModel->year)
+                                                        ({{ $car->carModel->year }})
+                                                    @endif
+                                                </div>
                                             </div>
                                         </td>
                                         <td>
@@ -482,39 +188,48 @@
             </div>
         </div>
 
-        <!-- Marques les plus collectionnées -->
+        <!-- Joueurs les plus actifs -->
         <div class="col-lg-6">
             <div class="card h-100">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="bi bi-building me-2"></i>
-                        Marques populaires
+                        <i class="bi bi-trophy me-2"></i>
+                        Top 10 - Collectionneurs les plus actifs
                     </h5>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-sm mb-0">
-                            <thead>
+                            <thead class="table-light">
                                 <tr>
-                                    <th>Marque</th>
-                                    <th>Collections</th>
-                                    <th>Collectionneurs</th>
+                                    <th>#</th>
+                                    <th>Joueur</th>
+                                    <th>Voitures</th>
+                                    <th>Tentatives moy.</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($mostFoundBrands as $brandStat)
+                                @foreach($mostActiveUsers->take(10) as $index => $user)
                                     <tr>
                                         <td>
+                                            <span class="badge {{ $index < 3 ? 'bg-warning' : 'bg-secondary' }}">
+                                                {{ $index + 1 }}
+                                            </span>
+                                        </td>
+                                        <td>
                                             <div class="d-flex align-items-center">
-                                                <span class="me-2">{{ $brandStat->brand->country_flag ?? '🌍' }}</span>
-                                                <span class="small fw-medium">{{ $brandStat->brand->name ?? 'N/A' }}</span>
+                                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2"
+                                                    style="width: 24px; height: 24px; font-size: 0.75rem;">
+                                                    {{ strtoupper(substr($user->userScore->username ?? 'U', 0, 1)) }}
+                                                </div>
+                                                <span class="small">{{ $user->userScore->username ?? 'Inconnu' }}</span>
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="badge bg-success">{{ $brandStat->found_count }}</span>
+                                            <span class="badge bg-success">{{ $user->cars_found }}</span>
                                         </td>
                                         <td>
-                                            <span class="small">{{ $brandStat->unique_collectors }}</span>
+                                            <span class="small">{{ number_format($user->avg_attempts, 1) }}</span>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -525,63 +240,90 @@
             </div>
         </div>
 
-        <!-- Top collectionneurs -->
-        <div class="col-lg-12">
-            <div class="card">
+        <!-- Répartition par difficulté -->
+        <div class="col-lg-6">
+            <div class="card h-100">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="bi bi-trophy me-2"></i>
-                        Top collectionneurs
+                        <i class="bi bi-bar-chart me-2"></i>
+                        Répartition par difficulté
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="difficultyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Marques populaires -->
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-building me-2"></i>
+                        Top 10 - Marques populaires
                     </h5>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead>
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light">
                                 <tr>
-                                    <th>Rang</th>
-                                    <th>Collectionneur</th>
-                                    <th>Voitures trouvées</th>
-                                    <th>Marques différentes</th>
-                                    <th>Tentatives moyennes</th>
-                                    <th>Efficacité</th>
+                                    <th>#</th>
+                                    <th>Marque</th>
+                                    <th>Collections</th>
+                                    <th>Collectionneurs</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($topCollectors as $index => $collector)
+                                @foreach($brandPerformance->take(10) as $index => $brand)
                                     <tr>
                                         <td>
-                                            @if($index < 3)
-                                                <span class="badge bg-warning">🏆 #{{ $index + 1 }}</span>
-                                            @else
-                                                <span class="badge bg-secondary">#{{ $index + 1 }}</span>
-                                            @endif
+                                            <span class="badge {{ $index < 3 ? 'bg-warning' : 'bg-secondary' }}">
+                                                {{ $index + 1 }}
+                                            </span>
                                         </td>
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center text-white"
-                                                    style="width: 24px; height: 24px; font-size: 0.7rem;">
-                                                    {{ substr($collector->userScore->username ?? 'U', 0, 1) }}
-                                                </div>
-                                                <span
-                                                    class="fw-medium">{{ $collector->userScore->username ?? 'Utilisateur inconnu' }}</span>
+                                                <span class="me-2">
+                                                    @php
+                                                        $flags = [
+                                                            'France' => '🇫🇷',
+                                                            'Allemagne' => '🇩🇪',
+                                                            'Italie' => '🇮🇹',
+                                                            'Espagne' => '🇪🇸',
+                                                            'Royaume-Uni' => '🇬🇧',
+                                                            'États-Unis' => '🇺🇸',
+                                                            'Japon' => '🇯🇵',
+                                                            'Corée du Sud' => '🇰🇷',
+                                                            'Chine' => '🇨🇳',
+                                                            'Suède' => '🇸🇪',
+                                                            'Norvège' => '🇳🇴',
+                                                            'Pays-Bas' => '🇳🇱',
+                                                            'Belgique' => '🇧🇪',
+                                                            'Suisse' => '🇨🇭',
+                                                            'Autriche' => '🇦🇹',
+                                                            'République tchèque' => '🇨🇿',
+                                                            'Pologne' => '🇵🇱',
+                                                            'Russie' => '🇷🇺',
+                                                            'Inde' => '🇮🇳',
+                                                            'Brésil' => '🇧🇷',
+                                                            'Canada' => '🇨🇦',
+                                                            'Australie' => '🇦🇺',
+                                                            'Roumanie' => '🇷🇴',
+                                                            'Malaisie' => '🇲🇾'
+                                                        ];
+                                                        echo $flags[$brand->country] ?? '🌍';
+                                                    @endphp
+                                                </span>
+                                                <span class="small fw-medium">{{ $brand->name ?? 'N/A' }}</span>
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="fw-bold text-primary">{{ $collector->cars_found }}</span>
+                                            <span class="badge bg-info">{{ $brand->found_count }}</span>
                                         </td>
                                         <td>
-                                            <span class="badge bg-info">{{ $collector->brands_collected }} marques</span>
-                                        </td>
-                                        <td>
-                                            <span class="small">{{ number_format($collector->avg_attempts, 1) }}</span>
-                                        </td>
-                                        <td>
-                                            @php
-                                                $efficiency = $collector->avg_attempts <= 3 ? 'Excellent' : ($collector->avg_attempts <= 5 ? 'Bon' : 'Moyen');
-                                                $badgeClass = $collector->avg_attempts <= 3 ? 'bg-success' : ($collector->avg_attempts <= 5 ? 'bg-warning' : 'bg-secondary');
-                                            @endphp
-                                            <span class="badge {{ $badgeClass }}">{{ $efficiency }}</span>
+                                            <span class="badge bg-purple">{{ $brand->unique_finders }}</span>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -591,5 +333,142 @@
                 </div>
             </div>
         </div>
+
+        <!-- Évolution mensuelle -->
+        @if($monthlyEvolution->count() > 0)
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-graph-up me-2"></i>
+                            Évolution des découvertes (12 derniers mois)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="evolutionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                // Graphique de répartition par difficulté
+                const difficultyCtx = document.getElementById('difficultyChart').getContext('2d');
+                const difficultyData = @json($difficultyStats->pluck('found_count', 'difficulty_level'));
+
+                new Chart(difficultyCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [
+                            'Niveau 1 (Facile)',
+                            'Niveau 2 (Facile)',
+                            'Niveau 3 (Moyen)',
+                            'Niveau 4 (Difficile)',
+                            'Niveau 5 (Expert)'
+                        ],
+                        datasets: [{
+                            data: [
+                                difficultyData[1] || 0,
+                                difficultyData[2] || 0,
+                                difficultyData[3] || 0,
+                                difficultyData[4] || 0,
+                                difficultyData[5] || 0
+                            ],
+                            backgroundColor: [
+                                '#10b981', // Vert pour facile
+                                '#34d399', // Vert clair
+                                '#f59e0b', // Orange pour moyen
+                                '#ef4444', // Rouge pour difficile
+                                '#7c3aed'  // Violet pour expert
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+
+                // Graphique d'évolution mensuelle
+                @if($monthlyEvolution->count() > 0)
+                    const evolutionCtx = document.getElementById('evolutionChart').getContext('2d');
+                    const evolutionData = @json($monthlyEvolution);
+
+                    new Chart(evolutionCtx, {
+                        type: 'line',
+                        data: {
+                            labels: evolutionData.map(item => {
+                                const [year, month] = item.month.split('-');
+                                return new Date(year, month - 1).toLocaleDateString('fr-FR', {
+                                    year: 'numeric',
+                                    month: 'short'
+                                });
+                            }),
+                            datasets: [{
+                                label: 'Voitures trouvées',
+                                data: evolutionData.map(item => item.cars_found),
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                tension: 0.1,
+                                fill: true
+                            }, {
+                                label: 'Joueurs uniques',
+                                data: evolutionData.map(item => item.unique_players),
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                tension: 0.1,
+                                fill: false
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'top'
+                                }
+                            }
+                        }
+                    });
+                @endif
+            });
+        </script>
+    @endpush
+
+    <style>
+        .text-purple {
+            color: #7c3aed !important;
+        }
+
+        .bg-purple {
+            background-color: #7c3aed !important;
+        }
+
+        .bg-purple.bg-opacity-10 {
+            background-color: rgba(124, 58, 237, 0.1) !important;
+        }
+
+        #difficultyChart {
+            height: 300px !important;
+        }
+
+        #evolutionChart {
+            height: 400px !important;
+        }
+    </style>
 </x-admin-layout>

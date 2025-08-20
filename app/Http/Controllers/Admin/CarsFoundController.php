@@ -12,18 +12,23 @@ use Illuminate\Support\Facades\DB;
 
 class CarsFoundController extends Controller
 {
+    /**
+     * Afficher la liste des voitures trouvées
+     */
     public function index(Request $request)
     {
         $query = UserCarFound::with(['userScore', 'carModel.brand']);
 
-        // Filtres
+        // Filtres de recherche
         if ($request->filled('search')) {
-            $query->whereHas('userScore', function ($q) use ($request) {
-                $q->where('username', 'like', '%' . $request->search . '%');
-            })->orWhereHas('carModel', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%');
-            })->orWhereHas('carModel.brand', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%');
+            $query->where(function ($q) use ($request) {
+                $q->whereHas('userScore', function ($subQ) use ($request) {
+                    $subQ->where('username', 'like', '%' . $request->search . '%');
+                })->orWhereHas('carModel', function ($subQ) use ($request) {
+                    $subQ->where('name', 'like', '%' . $request->search . '%');
+                })->orWhereHas('carModel.brand', function ($subQ) use ($request) {
+                    $subQ->where('name', 'like', '%' . $request->search . '%');
+                });
             });
         }
 
@@ -51,6 +56,10 @@ class CarsFoundController extends Controller
             $query->where('found_at', '<=', $request->date_to . ' 23:59:59');
         }
 
+        if ($request->filled('guild_id')) {
+            $query->where('guild_id', $request->guild_id);
+        }
+
         // Tri
         $sortField = $request->get('sort', 'found_at');
         $sortDirection = $request->get('direction', 'desc');
@@ -66,8 +75,13 @@ class CarsFoundController extends Controller
         // Données pour les filtres
         $users = UserScore::orderBy('username')->get();
         $brands = Brand::orderBy('name')->get();
+        $guilds = UserCarFound::select('guild_id')
+            ->whereNotNull('guild_id')
+            ->distinct()
+            ->orderBy('guild_id')
+            ->get();
 
-        // Statistiques
+        // Statistiques générales
         $stats = [
             'total' => UserCarFound::count(),
             'today' => UserCarFound::whereDate('found_at', today())->count(),
@@ -77,12 +91,15 @@ class CarsFoundController extends Controller
             'unique_cars' => UserCarFound::distinct('car_id')->count(),
         ];
 
-        return view('admin.cars-found.index', compact('carsFound', 'users', 'brands', 'stats'));
+        return view('admin.cars-found.index', compact('carsFound', 'users', 'brands', 'guilds', 'stats'));
     }
 
-    public function show(UserCarFound $carFound)
+    /**
+     * Afficher le détail d'une trouvaille
+     */
+    public function show($id)
     {
-        $carFound->load(['userScore', 'carModel.brand']);
+        $carFound = UserCarFound::with(['userScore', 'carModel.brand'])->findOrFail($id);
 
         // Statistiques pour cette voiture spécifique
         $carStats = [
@@ -109,8 +126,59 @@ class CarsFoundController extends Controller
         return view('admin.cars-found.show', compact('carFound', 'carStats', 'otherFinds'));
     }
 
-    public function destroy(UserCarFound $carFound)
+    /**
+     * Formulaire d'ajout manuel d'une trouvaille
+     */
+    public function create()
     {
+        $users = UserScore::orderBy('username')->get();
+        $cars = CarModel::with('brand')->orderBy('name')->get();
+
+        return view('admin.cars-found.create', compact('users', 'cars'));
+    }
+
+    /**
+     * Enregistrer une nouvelle trouvaille manuellement
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:user_scores,user_id',
+            'car_id' => 'required|exists:models,id',
+            'attempts_used' => 'required|integer|min:1|max:100',
+            'time_taken' => 'nullable|integer|min:1',
+            'guild_id' => 'nullable|string|max:50',
+        ]);
+
+        // Vérifier si cette combinaison existe déjà
+        $exists = UserCarFound::where('user_id', $request->user_id)
+            ->where('car_id', $request->car_id)
+            ->exists();
+
+        if ($exists) {
+            return redirect()->back()
+                ->with('error', 'Ce joueur a déjà trouvé cette voiture.');
+        }
+
+        UserCarFound::create([
+            'user_id' => $request->user_id,
+            'car_id' => $request->car_id,
+            'found_at' => now(),
+            'attempts_used' => $request->attempts_used,
+            'time_taken' => $request->time_taken,
+            'guild_id' => $request->guild_id,
+        ]);
+
+        return redirect()->route('admin.cars-found.index')
+            ->with('success', 'Trouvaille ajoutée manuellement avec succès.');
+    }
+
+    /**
+     * Supprimer une trouvaille
+     */
+    public function destroy($id)
+    {
+        $carFound = UserCarFound::findOrFail($id);
         $carFound->delete();
 
         return redirect()->route('admin.cars-found.index')
@@ -150,13 +218,14 @@ class CarsFoundController extends Controller
             ->get();
 
         // Répartition par difficulté
-        $difficultyStats = UserCarFound::join('car_models', 'user_cars_found.car_id', '=', 'car_models.id')
+        $difficultyStats = UserCarFound::join('models', 'user_cars_found.car_id', '=', 'models.id')
             ->selectRaw('
-                car_models.difficulty_level,
+                models.difficulty_level,
                 COUNT(*) as found_count,
                 AVG(user_cars_found.attempts_used) as avg_attempts
             ')
-            ->groupBy('car_models.difficulty_level')
+            ->groupBy('models.difficulty_level')
+            ->orderBy('models.difficulty_level')
             ->get();
 
         // Évolution mensuelle
@@ -172,27 +241,40 @@ class CarsFoundController extends Controller
             ->get();
 
         // Performance par marque
-        $brandPerformance = UserCarFound::join('car_models', 'user_cars_found.car_id', '=', 'car_models.id')
-            ->join('brands', 'car_models.brand_id', '=', 'brands.id')
+        $brandPerformance = UserCarFound::join('models', 'user_cars_found.car_id', '=', 'models.id')
+            ->join('brands', 'models.brand_id', '=', 'brands.id')
             ->selectRaw('
                 brands.id,
                 brands.name,
                 brands.logo_url,
+                brands.country,
                 COUNT(*) as found_count,
                 AVG(user_cars_found.attempts_used) as avg_attempts,
                 COUNT(DISTINCT user_cars_found.user_id) as unique_finders
             ')
-            ->groupBy('brands.id', 'brands.name', 'brands.logo_url')
+            ->groupBy('brands.id', 'brands.name', 'brands.logo_url', 'brands.country')
             ->orderBy('found_count', 'desc')
             ->limit(15)
             ->get();
+
+        // Statistiques générales
+        $generalStats = [
+            'total_found' => UserCarFound::count(),
+            'unique_players' => UserCarFound::distinct('user_id')->count(),
+            'unique_cars' => UserCarFound::distinct('car_id')->count(),
+            'average_attempts' => UserCarFound::avg('attempts_used'),
+            'total_cars_available' => CarModel::count(),
+            'completion_rate' => CarModel::count() > 0 ?
+                round((UserCarFound::distinct('car_id')->count() / CarModel::count()) * 100, 1) : 0,
+        ];
 
         return view('admin.cars-found.statistics', compact(
             'mostFoundCars',
             'mostActiveUsers',
             'difficultyStats',
             'monthlyEvolution',
-            'brandPerformance'
+            'brandPerformance',
+            'generalStats'
         ));
     }
 
@@ -222,7 +304,7 @@ class CarsFoundController extends Controller
             $query->where('found_at', '<=', $request->date_to . ' 23:59:59');
         }
 
-        $carsFound = $query->get();
+        $carsFound = $query->orderBy('found_at', 'desc')->get();
 
         $headers = [
             'Content-Type' => 'text/csv',
@@ -232,29 +314,31 @@ class CarsFoundController extends Controller
         $callback = function () use ($carsFound) {
             $file = fopen('php://output', 'w');
 
+            // Entêtes CSV
             fputcsv($file, [
                 'ID',
-                'Player',
-                'Brand',
-                'Model',
-                'Difficulty',
-                'Found At',
-                'Attempts Used',
-                'Time Taken (seconds)',
-                'Guild ID'
+                'Joueur',
+                'Marque',
+                'Modèle',
+                'Difficulté',
+                'Trouvé le',
+                'Tentatives utilisées',
+                'Temps (secondes)',
+                'Serveur Discord'
             ]);
 
+            // Données
             foreach ($carsFound as $item) {
                 fputcsv($file, [
                     $item->id,
-                    $item->userScore->username ?? 'Unknown',
+                    $item->userScore->username ?? 'Inconnu',
                     $item->carModel->brand->name ?? 'N/A',
                     $item->carModel->name ?? 'N/A',
                     $item->carModel->difficulty_level ?? 'N/A',
                     $item->found_at->format('Y-m-d H:i:s'),
                     $item->attempts_used,
                     $item->time_taken,
-                    $item->guild_id
+                    $item->guild_id ?? 'N/A'
                 ]);
             }
 
@@ -281,7 +365,7 @@ class CarsFoundController extends Controller
     }
 
     /**
-     * API pour récupérer les dernières trouvailles
+     * API pour récupérer les dernières trouvailles (pour dashboard)
      */
     public function recent()
     {
@@ -292,7 +376,7 @@ class CarsFoundController extends Controller
             ->map(function ($item) {
                 return [
                     'id' => $item->id,
-                    'player' => $item->userScore->username ?? 'Unknown',
+                    'player' => $item->userScore->username ?? 'Inconnu',
                     'car' => ($item->carModel->brand->name ?? '') . ' ' . ($item->carModel->name ?? ''),
                     'difficulty' => $item->carModel->difficulty_level ?? 0,
                     'attempts' => $item->attempts_used,
@@ -305,7 +389,7 @@ class CarsFoundController extends Controller
     }
 
     /**
-     * Recherche rapide
+     * Recherche rapide (AJAX)
      */
     public function search(Request $request)
     {
@@ -341,38 +425,37 @@ class CarsFoundController extends Controller
     }
 
     /**
-     * Valider une trouvaille manuelle
+     * Convertir le nom du pays en emoji drapeau
      */
-    public function validate(Request $request)
+    private function getCountryFlag($country)
     {
-        $request->validate([
-            'user_id' => 'required|exists:user_scores,user_id',
-            'car_id' => 'required|exists:car_models,id',
-            'attempts_used' => 'required|integer|min:1',
-            'time_taken' => 'nullable|integer|min:1',
-            'guild_id' => 'nullable|string',
-        ]);
+        $flags = [
+            'France' => '🇫🇷',
+            'Allemagne' => '🇩🇪',
+            'Italie' => '🇮🇹',
+            'Espagne' => '🇪🇸',
+            'Royaume-Uni' => '🇬🇧',
+            'États-Unis' => '🇺🇸',
+            'Japon' => '🇯🇵',
+            'Corée du Sud' => '🇰🇷',
+            'Chine' => '🇨🇳',
+            'Suède' => '🇸🇪',
+            'Norvège' => '🇳🇴',
+            'Pays-Bas' => '🇳🇱',
+            'Belgique' => '🇧🇪',
+            'Suisse' => '🇨🇭',
+            'Autriche' => '🇦🇹',
+            'République tchèque' => '🇨🇿',
+            'Pologne' => '🇵🇱',
+            'Russie' => '🇷🇺',
+            'Inde' => '🇮🇳',
+            'Brésil' => '🇧🇷',
+            'Canada' => '🇨🇦',
+            'Australie' => '🇦🇺',
+            'Roumanie' => '🇷🇴',
+            'Malaisie' => '🇲🇾',
+        ];
 
-        // Vérifier si cette combinaison existe déjà
-        $exists = UserCarFound::where('user_id', $request->user_id)
-            ->where('car_id', $request->car_id)
-            ->exists();
-
-        if ($exists) {
-            return redirect()->back()
-                ->with('error', 'Ce joueur a déjà trouvé cette voiture.');
-        }
-
-        UserCarFound::create([
-            'user_id' => $request->user_id,
-            'car_id' => $request->car_id,
-            'found_at' => now(),
-            'attempts_used' => $request->attempts_used,
-            'time_taken' => $request->time_taken,
-            'guild_id' => $request->guild_id,
-        ]);
-
-        return redirect()->route('admin.cars-found.index')
-            ->with('success', 'Trouvaille ajoutée manuellement avec succès.');
+        return $flags[$country] ?? '🌍';
     }
 }
