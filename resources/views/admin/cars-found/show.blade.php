@@ -160,7 +160,7 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label text-muted">Serveur Discord</label>
-                            <div class="fw-medium">{{ $carFound->guild_id ?? 'Non spécifié' }}</div>
+                            <div class="fw-medium">{{  getGuildName($carFound->guild_id) ?? 'Non spécifié' }}</div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label text-muted">ID de trouvaille</label>

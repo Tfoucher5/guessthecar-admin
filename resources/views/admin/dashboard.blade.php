@@ -158,7 +158,8 @@
                                         <i class="bi bi-robot me-1"></i>Bot Info
                                     </h6>
                                     <div class="d-flex align-items-center mb-2">
-                                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2"
+                                            style="width: 32px; height: 32px;">
                                             <i class="bi bi-robot text-white"></i>
                                         </div>
                                         <div>
@@ -262,12 +263,14 @@
                 <div class="card-body p-3">
                     <div class="row g-2">
                         <div class="col-md-6">
-                            <a href="{{ route('admin.brands.create') }}" class="btn btn-outline-primary w-100 text-start">
+                            <a href="{{ route('admin.brands.create') }}"
+                                class="btn btn-outline-primary w-100 text-start">
                                 <i class="bi bi-plus-circle me-2"></i>Nouvelle marque
                             </a>
                         </div>
                         <div class="col-md-6">
-                            <a href="{{ route('admin.models.create') }}" class="btn btn-outline-success w-100 text-start">
+                            <a href="{{ route('admin.models.create') }}"
+                                class="btn btn-outline-success w-100 text-start">
                                 <i class="bi bi-car-front me-2"></i>Nouveau modèle
                             </a>
                         </div>
@@ -277,7 +280,8 @@
                             </button>
                         </div>
                         <div class="col-md-6">
-                            <a href="{{ route('admin.sessions.index') }}" class="btn btn-outline-warning w-100 text-start">
+                            <a href="{{ route('admin.sessions.index') }}"
+                                class="btn btn-outline-warning w-100 text-start">
                                 <i class="bi bi-controller me-2"></i>Voir sessions
                             </a>
                         </div>
@@ -290,45 +294,46 @@
         <div class="col-xl-4">
             <!-- Top Joueurs -->
             @if(isset($topPlayers) && $topPlayers->count() > 0)
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white border-0 py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="card-title mb-0">
-                            <i class="bi bi-trophy me-2"></i>Top Joueurs
-                        </h6>
-                        <a href="{{ route('admin.players.index') }}" class="btn btn-outline-primary btn-sm">
-                            Tous <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-trophy me-2"></i>Top Joueurs
+                            </h6>
+                            <a href="{{ route('admin.players.index') }}" class="btn btn-outline-primary btn-sm">
+                                Tous <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body p-3">
+                        @foreach($topPlayers->take(5) as $index => $player)
+                            <div class="d-flex align-items-center {{ $loop->last ? '' : 'mb-3' }}">
+                                <div class="me-3">
+                                    @if($index === 0)
+                                        <i class="bi bi-trophy-fill text-warning fs-5"></i>
+                                    @elseif($index === 1)
+                                        <i class="bi bi-award-fill text-secondary fs-5"></i>
+                                    @elseif($index === 2)
+                                        <i class="bi bi-award-fill fs-5" style="color: #cd7f32;"></i>
+                                    @else
+                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center"
+                                            style="width: 24px; height: 24px; font-size: 0.8rem;">
+                                            {{ $index + 1 }}
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-medium">{{ $player->username }} | {{ getGuildName($player->guild_id) }}</div>
+                                    <small class="text-muted">{{ $player->games_played ?? 0 }} parties</small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold text-primary">{{ number_format($player->total_points, 0) }}</div>
+                                    <small class="text-muted">pts</small>
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
-                <div class="card-body p-3">
-                    @foreach($topPlayers->take(5) as $index => $player)
-                        <div class="d-flex align-items-center {{ $loop->last ? '' : 'mb-3' }}">
-                            <div class="me-3">
-                                @if($index === 0)
-                                    <i class="bi bi-trophy-fill text-warning fs-5"></i>
-                                @elseif($index === 1)
-                                    <i class="bi bi-award-fill text-secondary fs-5"></i>
-                                @elseif($index === 2)
-                                    <i class="bi bi-award-fill fs-5" style="color: #cd7f32;"></i>
-                                @else
-                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 0.8rem;">
-                                        {{ $index + 1 }}
-                                    </div>
-                                @endif
-                            </div>
-                            <div class="flex-grow-1">
-                                <div class="fw-medium">{{ $player->username }}</div>
-                                <small class="text-muted">{{ $player->games_played ?? 0 }} parties</small>
-                            </div>
-                            <div class="text-end">
-                                <div class="fw-bold text-primary">{{ number_format($player->total_points, 0) }}</div>
-                                <small class="text-muted">pts</small>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
             @endif
 
             <!-- Répartition difficulté - Compact -->
@@ -362,7 +367,8 @@
                                 <span class="small text-muted">{{ $count }} ({{ number_format($percentage, 1) }}%)</span>
                             </div>
                             <div class="progress" style="height: 6px;">
-                                <div class="progress-bar bg-{{ $difficulty['color'] }}" style="width: {{ $percentage }}%"></div>
+                                <div class="progress-bar bg-{{ $difficulty['color'] }}" style="width: {{ $percentage }}%">
+                                </div>
                             </div>
                         </div>
                     @endforeach
@@ -373,44 +379,78 @@
 
     <!-- Activité récente - Full width -->
     @if(isset($recentGames) && $recentGames->count() > 0)
-    <div class="row">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-0 py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="card-title mb-0">
-                            <i class="bi bi-clock-history me-2"></i>Activité récente
-                        </h6>
-                        <a href="{{ route('admin.sessions.index') }}" class="btn btn-outline-primary btn-sm">
-                            Toutes les sessions <i class="bi bi-arrow-right ms-1"></i>
-                        </a>
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-clock-history me-2"></i>Activité récente
+                            </h6>
+                            <a href="{{ route('admin.sessions.index') }}" class="btn btn-outline-primary btn-sm">
+                                Toutes les sessions <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        </div>
                     </div>
-                </div>
-                <div class="card-body p-3">
-                    <div class="row g-2">
-                        @foreach($recentGames->take(6) as $game)
-                            <div class="col-md-4">
-                                <div class="bg-light rounded p-2">
-                                    <div class="d-flex align-items-center">
-                                        <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
-                                            <i class="bi bi-person text-primary"></i>
+                    <div class="card-body p-3">
+                        <div class="row g-2">
+                            @foreach($recentGames->take(6) as $game)
+                                <div class="col-md-4">
+                                    <div class="bg-light rounded p-2">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2"
+                                                style="width: 32px; height: 32px;">
+                                                <i class="bi bi-person text-primary"></i>
+                                            </div>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <div class="fw-medium text-truncate">
+                                                    {{ $game->userScore->username ?? 'Joueur' }}
+                                                    @if($game->userScore && $game->userScore->guild_id)
+                                                        | {{ getGuildName($game->guild_id ) }}
+                                                    @endif
+                                                </div>
+                                                <div class="small text-muted">
+                                                    @php
+                                                        // S'assurer que la date est dans le bon timezone
+                                                        $gameDate = $game->started_at;
+                                                        if ($gameDate) {
+                                                            // Forcer le timezone si nécessaire
+                                                            $gameDate = $gameDate->setTimezone(config('app.timezone', 'UTC'));
+
+                                                            // Calculer la différence manuellement si diffForHumans() pose problème
+                                                            $diffInMinutes = now()->diffInMinutes($gameDate);
+
+                                                            if ($diffInMinutes < 1) {
+                                                                $timeAgo = 'À l\'instant';
+                                                            } elseif ($diffInMinutes < 60) {
+                                                                $timeAgo = 'Il y a ' . $diffInMinutes . ' min';
+                                                            } elseif ($diffInMinutes < 1440) {
+                                                                $hours = floor($diffInMinutes / 60);
+                                                                $timeAgo = 'Il y a ' . $hours . 'h';
+                                                            } else {
+                                                                $days = floor($diffInMinutes / 1440);
+                                                                $timeAgo = 'Il y a ' . $days . 'j';
+                                                            }
+                                                        } else {
+                                                            $timeAgo = 'Date inconnue';
+                                                        }
+                                                    @endphp
+                                                    {{ $timeAgo }}
+                                                </div>
+                                            </div>
+                                            <span
+                                                class="badge bg-{{ ($game->points_earned + $game->difficulty_points_earned) > 50 ? 'success' : 'secondary' }}">
+                                                {{ $game->points_earned + $game->difficulty_points_earned }}pts
+                                            </span>
                                         </div>
-                                        <div class="flex-grow-1 min-w-0">
-                                            <div class="fw-medium text-truncate">{{ $game->userScore->username ?? 'Joueur' }}</div>
-                                            <div class="small text-muted">{{ $game->started_at->diffForHumans() }}</div>
-                                        </div>
-                                        <span class="badge bg-{{ ($game->points_earned + $game->difficulty_points_earned) > 50 ? 'success' : 'secondary' }}">
-                                            {{ $game->points_earned + $game->difficulty_points_earned }}pts
-                                        </span>
                                     </div>
                                 </div>
-                            </div>
-                        @endforeach
+                            @endforeach
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
     @endif
 
     <!-- Scripts optimisés -->
@@ -453,7 +493,7 @@
             try {
                 const response = await fetch(`${API_BASE_URL}/stats/detailed`, { timeout: 10000 });
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                
+
                 const data = await response.json();
                 discordStatsCache = data;
                 updateDiscordStatsDisplay(data);
@@ -472,13 +512,13 @@
 
             const bot = data.bot || {};
             const api = data.api || {};
-            
+
             // Stats principales
             updateElement('discord-guilds', formatNumber(bot.guilds || 0));
             updateElement('discord-users', formatNumber(bot.users || 0));
             updateElement('discord-commands-today', formatNumber(bot.commands?.today || 0));
             updateElement('discord-games-active', formatNumber(bot.games?.active || 0));
-            
+
             // Bot info
             updateElement('bot-username', bot.botInfo?.username || bot.botInfo?.name || 'Bot Discord');
             updateElement('bot-uptime', formatUptime(bot.uptime || api.uptime || 0));
@@ -546,7 +586,7 @@
         function updateDiscordStatusBadge(isOnline) {
             const badge = document.getElementById('discord-api-status');
             if (!badge) return;
-            
+
             if (isOnline) {
                 badge.className = 'badge bg-success';
                 badge.innerHTML = '<i class="bi bi-check-circle"></i> Discord OK';
@@ -564,12 +604,12 @@
         }
 
         // Initialisation
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             fetchDiscordStats();
             refreshInterval = setInterval(fetchDiscordStats, REFRESH_INTERVAL);
         });
 
-        window.addEventListener('beforeunload', function() {
+        window.addEventListener('beforeunload', function () {
             if (refreshInterval) clearInterval(refreshInterval);
         });
 

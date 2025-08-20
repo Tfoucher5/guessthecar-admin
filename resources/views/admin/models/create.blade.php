@@ -136,12 +136,10 @@
                                 <div id="model-preview" class="d-none">
                                     <div class="row align-items-center">
                                         <div class="col-md-3">
-                                            <!-- Conteneur pour l'image avec les mêmes styles que edit.blade.php -->
-                                            <div id="preview-image-container"
-                                                style="width: 120px; height: 120px; border: 1px solid #dee2e6; border-radius: 8px; background-color: white; padding: 4px; overflow: hidden; margin: 0 auto; display: none;">
-                                                <img id="preview-image" src="" alt="Prévisualisation"
-                                                    style="width: 100%; height: 100%; object-fit: contain; object-position: center; border-radius: 4px;">
-                                            </div>
+                                            <!-- Image simplifiée comme dans edit.blade.php -->
+                                            <img id="preview-image" src="" alt="Prévisualisation"
+                                                class="img-fluid rounded shadow-sm mx-auto d-block"
+                                                style="max-width: 120px; max-height: 120px; object-fit: contain;">
                                         </div>
                                         <div class="col-md-9">
                                             <h5 id="preview-name" class="mb-2">Nom du modèle</h5>
@@ -161,116 +159,180 @@
                         </div>
                     </div>
 
-                    <script>
-                        // Configuration des niveaux de difficulté
-                        const difficultyInfo = {
-                            1: {
-                                class: 'alert-success',
-                                icon: 'bi-emoji-smile',
-                                text: 'Facile - Modèle populaire, facile à deviner'
-                            },
-                            2: {
-                                class: 'alert-warning',
-                                icon: 'bi-emoji-neutral',
-                                text: 'Moyen - Difficulté modérée pour les joueurs'
-                            },
-                            3: {
-                                class: 'alert-danger',
-                                icon: 'bi-emoji-frown',
-                                text: 'Difficile - Modèle rare ou très spécialisé'
-                            }
-                        };
+                    <!-- BOUTONS D'ACTION AJOUTÉS -->
+                    <div class="col-12">
+                        <div class="d-flex gap-2 pt-3 border-top">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-lg me-1"></i>
+                                Créer le modèle
+                            </button>
+                            <a href="{{ route('admin.models.index') }}" class="btn btn-secondary">
+                                <i class="bi bi-x-lg me-1"></i>
+                                Annuler
+                            </a>
+                            <button type="reset" class="btn btn-outline-warning">
+                                <i class="bi bi-arrow-clockwise me-1"></i>
+                                Réinitialiser
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
-                        // Fonction pour mettre à jour la prévisualisation
-                        function updatePreview() {
-                            const name = document.getElementById('name').value;
-                            const brandSelect = document.getElementById('brand_id');
-                            const brandName = brandSelect.options[brandSelect.selectedIndex].text;
-                            const year = document.getElementById('year').value;
-                            const imageUrl = document.getElementById('image_url').value;
-                            const difficultyLevel = document.getElementById('difficulty_level').value;
+    <script>
+        // Configuration des niveaux de difficulté
+        const difficultyInfo = {
+            1: {
+                class: 'alert-success',
+                icon: 'bi-emoji-smile',
+                text: 'Facile - Modèle populaire, facile à deviner'
+            },
+            2: {
+                class: 'alert-warning',
+                icon: 'bi-emoji-neutral',
+                text: 'Moyen - Difficulté modérée pour les joueurs'
+            },
+            3: {
+                class: 'alert-danger',
+                icon: 'bi-emoji-frown',
+                text: 'Difficile - Modèle rare ou très spécialisé'
+            }
+        };
 
-                            const previewDiv = document.getElementById('model-preview');
-                            const noPreviewDiv = document.getElementById('no-preview');
-                            const previewImageContainer = document.getElementById('preview-image-container');
-                            const previewImage = document.getElementById('preview-image');
-                            const previewPlaceholder = document.getElementById('preview-placeholder');
-                            const previewName = document.getElementById('preview-name');
-                            const previewBrand = document.getElementById('preview-brand');
-                            const previewYear = document.getElementById('preview-year');
-                            const previewDifficulty = document.getElementById('preview-difficulty');
+        // Fonction pour mettre à jour l'indicateur de difficulté
+        function updateDifficultyIndicator() {
+            const difficultyLevel = document.getElementById('difficulty_level').value;
+            const indicator = document.getElementById('difficulty-indicator');
 
-                            if (name || brandName || year || difficultyLevel) {
-                                previewDiv.classList.remove('d-none');
-                                noPreviewDiv.classList.add('d-none');
+            if (difficultyLevel && difficultyInfo[difficultyLevel]) {
+                const info = difficultyInfo[difficultyLevel];
+                indicator.className = `alert ${info.class} border`;
+                indicator.innerHTML = `<i class="bi ${info.icon} me-2"></i>${info.text}`;
+            } else {
+                indicator.className = 'alert alert-light border';
+                indicator.innerHTML = '<small class="text-muted">Sélectionnez un niveau de difficulté</small>';
+            }
+        }
 
-                                previewName.textContent = name || 'Nom du modèle';
+        // Fonction pour mettre à jour la prévisualisation - SIMPLIFIÉE
+        function updatePreview() {
+            const name = document.getElementById('name').value;
+            const brandSelect = document.getElementById('brand_id');
+            const brandName = brandSelect.options[brandSelect.selectedIndex].text;
+            const year = document.getElementById('year').value;
+            const imageUrl = document.getElementById('image_url').value;
+            const difficultyLevel = document.getElementById('difficulty_level').value;
 
-                                // Marque
-                                if (brandName && brandName !== 'Sélectionner une marque') {
-                                    previewBrand.textContent = brandName;
-                                    previewBrand.style.display = 'inline';
-                                } else {
-                                    previewBrand.style.display = 'none';
-                                }
+            const previewDiv = document.getElementById('model-preview');
+            const noPreviewDiv = document.getElementById('no-preview');
+            const previewImage = document.getElementById('preview-image');
+            const previewName = document.getElementById('preview-name');
+            const previewBrand = document.getElementById('preview-brand');
+            const previewYear = document.getElementById('preview-year');
+            const previewDifficulty = document.getElementById('preview-difficulty');
 
-                                // Année
-                                if (year) {
-                                    previewYear.textContent = year;
-                                    previewYear.style.display = 'inline';
-                                } else {
-                                    previewYear.style.display = 'none';
-                                }
+            if (name || brandName !== 'Sélectionner une marque' || year || difficultyLevel) {
+                previewDiv.classList.remove('d-none');
+                noPreviewDiv.classList.add('d-none');
 
-                                // Difficulté
-                                if (difficultyLevel && difficultyInfo[difficultyLevel]) {
-                                    const info = difficultyInfo[difficultyLevel];
-                                    previewDifficulty.className = `badge fs-6 ${info.class.replace('alert-', 'bg-')}`;
-                                    previewDifficulty.innerHTML = `<i class="bi ${info.icon} me-1"></i>${difficultyLevel == 1 ? 'Facile' : difficultyLevel == 2 ? 'Moyen' : 'Difficile'}`;
-                                    previewDifficulty.style.display = 'inline';
-                                } else {
-                                    previewDifficulty.style.display = 'none';
-                                }
+                previewName.textContent = name || 'Nom du modèle';
 
-                                // Image - LOGIQUE CORRIGÉE
-                                if (imageUrl && imageUrl.trim() !== '') {
-                                    // Afficher l'image, masquer le placeholder
-                                    previewImage.src = imageUrl;
-                                    previewImageContainer.style.display = 'block';
-                                    previewPlaceholder.style.display = 'none';
+                // Marque
+                if (brandName && brandName !== 'Sélectionner une marque') {
+                    previewBrand.textContent = brandName;
+                    previewBrand.style.display = 'inline';
+                } else {
+                    previewBrand.style.display = 'none';
+                }
 
-                                    // Gérer l'erreur de chargement
-                                    previewImage.onerror = function () {
-                                        previewImageContainer.style.display = 'none';
-                                        previewPlaceholder.style.display = 'flex';
-                                    };
-                                } else {
-                                    // Pas d'URL d'image, afficher le placeholder
-                                    previewImageContainer.style.display = 'none';
-                                    previewPlaceholder.style.display = 'flex';
-                                }
-                            } else {
-                                previewDiv.classList.add('d-none');
-                                noPreviewDiv.classList.remove('d-none');
-                            }
-                        }
+                // Année
+                if (year) {
+                    previewYear.textContent = year;
+                    previewYear.style.display = 'inline';
+                } else {
+                    previewYear.style.display = 'none';
+                }
 
-                        // Écouter les changements sur tous les champs
-                        document.addEventListener('DOMContentLoaded', function () {
-                            const nameField = document.getElementById('name');
-                            const brandField = document.getElementById('brand_id');
-                            const yearField = document.getElementById('year');
-                            const imageField = document.getElementById('image_url');
-                            const difficultyField = document.getElementById('difficulty_level');
+                // Difficulté
+                if (difficultyLevel && difficultyInfo[difficultyLevel]) {
+                    const info = difficultyInfo[difficultyLevel];
+                    previewDifficulty.className = `badge fs-6 ${info.class.replace('alert-', 'bg-')}`;
+                    previewDifficulty.innerHTML = `<i class="bi ${info.icon} me-1"></i>${difficultyLevel == 1 ? 'Facile' : difficultyLevel == 2 ? 'Moyen' : 'Difficile'}`;
+                    previewDifficulty.style.display = 'inline';
+                } else {
+                    previewDifficulty.style.display = 'none';
+                }
 
-                            if (nameField) nameField.addEventListener('input', updatePreview);
-                            if (brandField) brandField.addEventListener('change', updatePreview);
-                            if (yearField) yearField.addEventListener('input', updatePreview);
-                            if (imageField) imageField.addEventListener('input', updatePreview);
-                            if (difficultyField) difficultyField.addEventListener('change', updatePreview);
+                // Image - VERSION SIMPLIFIÉE comme dans edit.blade.php
+                previewImage.src = imageUrl;
+            } else {
+                previewDiv.classList.add('d-none');
+                noPreviewDiv.classList.remove('d-none');
+            }
+        }
 
-                            // Initialisation
-                            updatePreview();
-                        });
-                    </script>
+        // Écouter les changements sur tous les champs
+        document.addEventListener('DOMContentLoaded', function () {
+            const nameField = document.getElementById('name');
+            const brandField = document.getElementById('brand_id');
+            const yearField = document.getElementById('year');
+            const imageField = document.getElementById('image_url');
+            const difficultyField = document.getElementById('difficulty_level');
+
+            if (nameField) nameField.addEventListener('input', updatePreview);
+            if (brandField) brandField.addEventListener('change', updatePreview);
+            if (yearField) yearField.addEventListener('input', updatePreview);
+            if (imageField) imageField.addEventListener('input', updatePreview);
+            if (difficultyField) {
+                difficultyField.addEventListener('change', function () {
+                    updatePreview();
+                    updateDifficultyIndicator();
+                });
+            }
+
+            // Validation du formulaire
+            document.querySelector('form').addEventListener('submit', function (e) {
+                const name = document.getElementById('name').value.trim();
+                const brandId = document.getElementById('brand_id').value;
+                const difficultyLevel = document.getElementById('difficulty_level').value;
+
+                if (!name) {
+                    e.preventDefault();
+                    alert('Le nom du modèle est obligatoire.');
+                    document.getElementById('name').focus();
+                    return false;
+                }
+
+                if (!brandId) {
+                    e.preventDefault();
+                    alert('Veuillez sélectionner une marque.');
+                    document.getElementById('brand_id').focus();
+                    return false;
+                }
+
+                if (!difficultyLevel) {
+                    e.preventDefault();
+                    alert('Veuillez sélectionner un niveau de difficulté.');
+                    document.getElementById('difficulty_level').focus();
+                    return false;
+                }
+
+                return true;
+            });
+
+            // Réinitialisation du formulaire
+            document.querySelector('button[type="reset"]').addEventListener('click', function () {
+                setTimeout(function () {
+                    updatePreview();
+                    updateDifficultyIndicator();
+                }, 10);
+            });
+
+            // Initialisation
+            updatePreview();
+            updateDifficultyIndicator();
+        });
+    </script>
 </x-admin-layout>

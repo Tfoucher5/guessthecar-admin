@@ -34,56 +34,56 @@
 
     <!-- Statistiques rapides -->
     @if(isset($stats))
-    <div class="row g-3 mb-4">
-        <div class="col-lg-2 col-md-4 col-sm-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center p-3">
-                    <div class="h5 mb-1 text-primary">{{ number_format($stats['total']) }}</div>
-                    <div class="small text-muted">Total</div>
+        <div class="row g-3 mb-4">
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center p-3">
+                        <div class="h5 mb-1 text-primary">{{ number_format($stats['total']) }}</div>
+                        <div class="small text-muted">Total</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center p-3">
+                        <div class="h5 mb-1 text-warning">{{ number_format($stats['active']) }}</div>
+                        <div class="small text-muted">Actives</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center p-3">
+                        <div class="h5 mb-1 text-success">{{ number_format($stats['completed']) }}</div>
+                        <div class="small text-muted">Terminées</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center p-3">
+                        <div class="h5 mb-1 text-danger">{{ number_format($stats['abandoned']) }}</div>
+                        <div class="small text-muted">Abandonnées</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center p-3">
+                        <div class="h5 mb-1 text-info">{{ number_format($stats['today']) }}</div>
+                        <div class="small text-muted">Aujourd'hui</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center p-3">
+                        <div class="h5 mb-1 text-secondary">{{ number_format($stats['avg_duration']) }}s</div>
+                        <div class="small text-muted">Durée moy.</div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-lg-2 col-md-4 col-sm-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center p-3">
-                    <div class="h5 mb-1 text-warning">{{ number_format($stats['active']) }}</div>
-                    <div class="small text-muted">Actives</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-2 col-md-4 col-sm-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center p-3">
-                    <div class="h5 mb-1 text-success">{{ number_format($stats['completed']) }}</div>
-                    <div class="small text-muted">Terminées</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-2 col-md-4 col-sm-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center p-3">
-                    <div class="h5 mb-1 text-danger">{{ number_format($stats['abandoned']) }}</div>
-                    <div class="small text-muted">Abandonnées</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-2 col-md-4 col-sm-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center p-3">
-                    <div class="h5 mb-1 text-info">{{ number_format($stats['today']) }}</div>
-                    <div class="small text-muted">Aujourd'hui</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-2 col-md-4 col-sm-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center p-3">
-                    <div class="h5 mb-1 text-secondary">{{ number_format($stats['avg_duration']) }}s</div>
-                    <div class="small text-muted">Durée moy.</div>
-                </div>
-            </div>
-        </div>
-    </div>
     @endif
 
     <!-- Filtres -->
@@ -100,8 +100,10 @@
                     <select class="form-select" id="status" name="status">
                         <option value="">Tous</option>
                         <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Actives</option>
-                        <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Terminées</option>
-                        <option value="abandoned" {{ request('status') === 'abandoned' ? 'selected' : '' }}>Abandonnées</option>
+                        <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Terminées
+                        </option>
+                        <option value="abandoned" {{ request('status') === 'abandoned' ? 'selected' : '' }}>Abandonnées
+                        </option>
                     </select>
                 </div>
 
@@ -112,7 +114,7 @@
                         @if(isset($users) && $users->count() > 0)
                             @foreach($users as $user)
                                 <option value="{{ $user->user_id }}" {{ request('user_id') == $user->user_id ? 'selected' : '' }}>
-                                    {{ $user->username }}
+                                    {{ $user->username }} | {{ getGuildName($user->guild_id) }}
                                 </option>
                             @endforeach
                         @endif
@@ -135,20 +137,14 @@
 
                 <div class="col-md-2">
                     <label for="date_from" class="form-label">Du</label>
-                    <input type="date" 
-                           class="form-control" 
-                           id="date_from" 
-                           name="date_from" 
-                           value="{{ request('date_from') }}">
+                    <input type="date" class="form-control" id="date_from" name="date_from"
+                        value="{{ request('date_from') }}">
                 </div>
 
                 <div class="col-md-2">
                     <label for="date_to" class="form-label">Au</label>
-                    <input type="date" 
-                           class="form-control" 
-                           id="date_to" 
-                           name="date_to" 
-                           value="{{ request('date_to') }}">
+                    <input type="date" class="form-control" id="date_to" name="date_to"
+                        value="{{ request('date_to') }}">
                 </div>
 
                 <div class="col-md-2 d-flex align-items-end">
@@ -185,13 +181,19 @@
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="bg-secondary rounded-circle me-2 d-flex align-items-center justify-content-center text-white"
-                                             style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                            style="width: 32px; height: 32px; font-size: 0.8rem;">
                                             {{ substr($session->userScore->username ?? 'U', 0, 2) }}
                                         </div>
                                         <div>
-                                            <div class="fw-medium">{{ $session->userScore->username ?? 'Utilisateur inconnu' }}</div>
+                                            <div class="fw-medium">{{ $session->userScore->username ?? 'Utilisateur inconnu' }}
+                                            </div>
                                             @if($session->guild_id)
-                                                <small class="text-muted">Serveur: {{ substr($session->guild_id, 0, 8) }}...</small>
+                                                <small class="text-muted"></small>
+                                                @php
+                                                    $guildName = getGuildName($session->guild_id);
+                                                @endphp
+                                                {{ strlen($guildName) > 15 ? substr($guildName, 0, 15) . '...' : $guildName }}
+                                                </small>
                                             @endif
                                         </div>
                                     </div>
@@ -199,10 +201,8 @@
                                 <td>
                                     <div class="d-flex align-items-center">
                                         @if($session->carModel && $session->carModel->image_url)
-                                            <img src="{{ $session->carModel->image_url }}" 
-                                                 alt="{{ $session->carModel->name }}" 
-                                                 class="me-2 rounded"
-                                                 style="width: 40px; height: 30px; object-fit: cover;">
+                                            <img src="{{ $session->carModel->image_url }}" alt="{{ $session->carModel->name }}"
+                                                class="me-2 rounded" style="width: 40px; height: 30px; object-fit: cover;">
                                         @endif
                                         <div>
                                             <div class="fw-medium">{{ $session->carModel->brand->name ?? 'N/A' }}</div>
@@ -215,7 +215,7 @@
                                         $statusClass = 'secondary';
                                         $statusText = 'Inconnue';
                                         $statusIcon = 'question-circle';
-                                        
+
                                         if ($session->completed) {
                                             $statusClass = 'success';
                                             $statusText = 'Terminée';
@@ -255,23 +255,17 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <a href="{{ route('admin.sessions.show', $session) }}" 
-                                           class="btn btn-outline-primary" 
-                                           title="Voir détails">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        
+
                                         @if(!$session->completed && !$session->abandoned)
-                                            <button onclick="endSession({{ $session->id }})" 
-                                                    class="btn btn-outline-warning" 
-                                                    title="Terminer la session">
+                                            <button onclick="endSession({{ $session->id }})" class="btn btn-outline-warning"
+                                                title="Terminer la session">
                                                 <i class="bi bi-stop"></i>
                                             </button>
                                         @endif
-                                        
-                                        <form method="POST" action="{{ route('admin.sessions.destroy', $session) }}" 
-                                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette session ?')" 
-                                              class="d-inline">
+
+                                        <form method="POST" action="{{ route('admin.sessions.destroy', $session) }}"
+                                            onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette session ?')"
+                                            class="d-inline">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-outline-danger" title="Supprimer">
@@ -332,18 +326,18 @@
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     }
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        alert('Erreur lors de la fermeture de la session: ' + (data.message || 'Erreur inconnue'));
-                    }
-                })
-                .catch(error => {
-                    console.error('Erreur:', error);
-                    alert('Erreur lors de la fermeture de la session');
-                });
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Erreur lors de la fermeture de la session: ' + (data.message || 'Erreur inconnue'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                        alert('Erreur lors de la fermeture de la session');
+                    });
             }
         }
 

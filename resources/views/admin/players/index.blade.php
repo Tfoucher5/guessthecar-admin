@@ -30,7 +30,11 @@
                         <option value="">Tous les serveurs</option>
                         @foreach($guilds as $guild)
                             <option value="{{ $guild->guild_id }}" {{ request('guild_id') === $guild->guild_id ? 'selected' : '' }}>
-                                Guild {{ substr($guild->guild_id, 0, 8) }}... ({{ $guild->players_count }} joueurs)
+                                @php
+                                    $guildName = getGuildName($guild->guild_id);
+                                @endphp
+                                {{ strlen($guildName) > 15 ? substr($guildName, 0, 15) . '...' : $guildName }}
+                                ({{ $guild->players_count }} joueurs)
                             </option>
                         @endforeach
                     </select>
@@ -111,7 +115,10 @@
                                 <td>
                                     @if($player->guild_id)
                                         <span class="badge bg-info">
-                                            {{ substr($player->guild_id, 0, 8) }}...
+                                            @php
+                                                $guildName = getGuildName($player->guild_id);
+                                            @endphp
+                                            {{ strlen($guildName) > 15 ? substr($guildName, 0, 15) . '...' : $guildName }}
                                         </span>
                                     @else
                                         <span class="text-muted">N/A</span>

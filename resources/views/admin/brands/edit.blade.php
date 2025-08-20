@@ -64,7 +64,7 @@
                                         @enderror
                                     </div>
 
-                                    <div class="mb-3">
+                                    <div class="mb-4">
                                         <label for="logo_url" class="form-label">URL du logo</label>
                                         <input type="url" class="form-control @error('logo_url') is-invalid @enderror"
                                             id="logo_url" name="logo_url"
@@ -77,6 +77,18 @@
                                             <i class="bi bi-info-circle me-1"></i>
                                             Formats recommandés: PNG, JPG, SVG (max 500 caractères)
                                         </div>
+                                    </div>
+
+                                    <!-- Boutons d'action -->
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-check-lg me-1"></i>
+                                            Enregistrer les modifications
+                                        </button>
+                                        <a href="{{ route('admin.brands.index') }}" class="btn btn-secondary">
+                                            <i class="bi bi-x-lg me-1"></i>
+                                            Annuler
+                                        </a>
                                     </div>
                                 </div>
 
@@ -91,18 +103,11 @@
                                         <div class="card bg-light border-dashed">
                                             <div class="card-body text-center">
                                                 <div class="mb-3">
-                                                    <!-- Image avec fallback corrigé -->
-                                                    <img id="preview-image" src="{{ $brand->logo_url }}" alt="Logo"
-                                                        class="img-fluid rounded shadow-sm"
-                                                        style="max-width: 80px; max-height: 80px; object-fit: contain; {{ $brand->logo_url ? 'display: block;' : 'display: none;' }}"
-                                                        onerror="this.style.display='none'; document.getElementById('fallback-logo').style.display='flex';">
-
-                                                    <!-- Fallback icon -->
-                                                    <div id="fallback-logo"
-                                                        class="d-flex align-items-center justify-content-center bg-secondary text-white rounded shadow-sm mx-auto"
-                                                        style="width: 80px; height: 80px; {{ $brand->logo_url ? 'display: none;' : 'display: flex;' }}">
-                                                        <i class="bi bi-image fs-3"></i>
-                                                    </div>
+                                                    <!-- Image simple sans fallback -->
+                                                    <img id="preview-image" src="{{ $brand->logo_url }}"
+                                                        alt="Logo de la marque"
+                                                        class="img-fluid rounded shadow-sm mx-auto d-block"
+                                                        style="max-width: 80px; max-height: 80px; object-fit: contain;">
                                                 </div>
 
                                                 <h6 id="preview-name" class="fw-bold text-dark mb-1">
@@ -117,7 +122,7 @@
                                                         if ($brand->founded_year)
                                                             $details[] = 'Fondée en ' . $brand->founded_year;
                                                     @endphp
-                                                    {{ implode(' • ', $details) }}
+                                                    {{ implode(' • ', $details) ?: 'Informations de la marque' }}
                                                 </p>
                                             </div>
                                         </div>
@@ -134,7 +139,8 @@
                                                         <div class="col-6">
                                                             <div class="border-end">
                                                                 <div class="fw-bold text-primary fs-4">
-                                                                    {{ $brand->models->count() }}</div>
+                                                                    {{ $brand->models->count() }}
+                                                                </div>
                                                                 <small class="text-muted">Modèles</small>
                                                             </div>
                                                         </div>
@@ -148,6 +154,28 @@
                                                 </div>
                                             </div>
                                         @endif
+
+                                        <!-- Actions rapides -->
+                                        <div class="card mt-3">
+                                            <div class="card-body">
+                                                <h6 class="card-title text-muted mb-3">
+                                                    <i class="bi bi-tools me-1"></i>
+                                                    Actions rapides
+                                                </h6>
+                                                <div class="d-grid gap-2">
+                                                    <a href="{{ route('admin.models.index', ['brand_id' => $brand->id]) }}"
+                                                        class="btn btn-outline-primary btn-sm">
+                                                        <i class="bi bi-car-front me-1"></i>
+                                                        Voir les modèles
+                                                    </a>
+                                                    <a href="{{ route('admin.models.create') }}?brand_id={{ $brand->id }}"
+                                                        class="btn btn-outline-success btn-sm">
+                                                        <i class="bi bi-plus-lg me-1"></i>
+                                                        Ajouter un modèle
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -159,57 +187,75 @@
     </div>
 
     <script>
-        // Prévisualisation en temps réel
+        // Prévisualisation en temps réel - VERSION SIMPLIFIÉE
         function updatePreview() {
             const name = document.getElementById('name').value;
             const country = document.getElementById('country').value;
             const logoUrl = document.getElementById('logo_url').value;
             const foundedYear = document.getElementById('founded_year').value;
 
-            // Référencer les bons éléments
-            const previewImage = document.getElementById('preview-image');
-            const fallbackLogo = document.getElementById('fallback-logo');
-            const previewName = document.getElementById('preview-name');
-            const previewDetails = document.getElementById('preview-details');
-
             // Mise à jour du nom
-            previewName.textContent = name || 'Nom de la marque';
+            document.getElementById('preview-name').textContent = name || 'Nom de la marque';
 
             // Mise à jour des détails
             let details = [];
             if (country) details.push(country);
             if (foundedYear) details.push(`Fondée en ${foundedYear}`);
-            previewDetails.textContent = details.join(' • ');
+            document.getElementById('preview-details').textContent = details.length > 0 ? details.join(' • ') : 'Informations de la marque';
 
-            // Gestion de l'affichage image/fallback
-            if (logoUrl && logoUrl.trim() !== '') {
-                console.log('Chargement de l\'image:', logoUrl); // Debug
-
-                // Afficher l'image, masquer le fallback
-                previewImage.src = logoUrl;
-                previewImage.style.display = 'block';
-                fallbackLogo.style.display = 'none';
-
-                // Gérer l'erreur de chargement
-                previewImage.onload = function () {
-                    console.log('Image chargée avec succès'); // Debug
-                };
-
-                previewImage.onerror = function () {
-                    console.log('Erreur de chargement de l\'image'); // Debug
-                    previewImage.style.display = 'none';
-                    fallbackLogo.style.display = 'flex';
-                };
-            } else {
-                // Pas d'URL, afficher le fallback
-                previewImage.style.display = 'none';
-                fallbackLogo.style.display = 'flex';
-            }
+            // Mise à jour de l'image - SIMPLE
+            document.getElementById('preview-image').src = logoUrl;
         }
 
-        // Initialiser la prévisualisation au chargement
+        // Initialisation au chargement
         document.addEventListener('DOMContentLoaded', function () {
             updatePreview();
         });
+
+        // Validation du formulaire
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelector('form').addEventListener('submit', function (e) {
+                const name = document.getElementById('name').value.trim();
+
+                if (!name) {
+                    e.preventDefault();
+                    alert('Le nom de la marque est obligatoire.');
+                    document.getElementById('name').focus();
+                    return false;
+                }
+
+                // Confirmation pour les modifications importantes
+                const originalName = '{{ $brand->name }}';
+                if (name !== originalName) {
+                    if (!confirm(`Êtes-vous sûr de vouloir renommer "${originalName}" en "${name}" ?`)) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+        });
     </script>
+
+    <style>
+        .border-dashed {
+            border: 2px dashed #dee2e6 !important;
+        }
+
+        .sticky-top {
+            position: sticky;
+            top: 20px;
+            z-index: 1020;
+        }
+
+        .card-body .btn {
+            transition: all 0.2s ease;
+        }
+
+        .card-body .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </x-admin-layout>

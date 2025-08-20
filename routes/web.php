@@ -40,11 +40,10 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
 
     // Gestion des joueurs
     Route::get('players', [PlayerController::class, 'index'])->name('players.index');
-    Route::get('players/{userScore}', [PlayerController::class, 'show'])->name('players.show');
-    Route::get('players/{userScore}/edit', [PlayerController::class, 'edit'])->name('players.edit');
-    Route::put('players/{userScore}', [PlayerController::class, 'update'])->name('players.update');
-    Route::delete('players/{userScore}', [PlayerController::class, 'destroy'])->name('players.destroy');
-
+    Route::get('players/{player}', [PlayerController::class, 'show'])->name('players.show');
+    Route::get('players/{player}/edit', [PlayerController::class, 'edit'])->name('players.edit');
+    Route::put('players/{player}', [PlayerController::class, 'update'])->name('players.update');
+    Route::delete('players/{player}', [PlayerController::class, 'destroy'])->name('players.destroy');
     // Sessions de jeu
     Route::get('sessions', [PlayerController::class, 'sessions'])->name('sessions.index');
     Route::get('sessions/{gameSession}', [PlayerController::class, 'sessionShow'])->name('sessions.show');

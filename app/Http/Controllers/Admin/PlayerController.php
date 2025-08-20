@@ -230,54 +230,6 @@ class PlayerController extends Controller
     }
 
     /**
-     * Suspendre un joueur
-     */
-    public function suspend(UserScore $player)
-    {
-        $player->update(['status' => 'suspended']);
-
-        return response()->json(['success' => true]);
-    }
-
-    /**
-     * Réactiver un joueur
-     */
-    public function activate(UserScore $player)
-    {
-        $player->update(['status' => 'active']);
-
-        return response()->json(['success' => true]);
-    }
-
-    /**
-     * Réinitialiser la progression d'un joueur
-     */
-    public function resetProgress(UserScore $player)
-    {
-        DB::transaction(function () use ($player) {
-            // Supprimer les voitures trouvées
-            $player->userCarsFound()->delete();
-
-            // Marquer les sessions comme abandonnées
-            $player->gameSessions()
-                ->where('completed', false)
-                ->update(['completed' => false, 'abandoned' => true]);
-
-            // Réinitialiser les statistiques
-            $player->update([
-                'total_points' => 0,
-                'games_played' => 0,
-                'games_won' => 0,
-                'best_streak' => 0,
-                'current_streak' => 0,
-                'success_rate' => 0,
-            ]);
-        });
-
-        return response()->json(['success' => true]);
-    }
-
-    /**
      * Exporter les données d'un joueur
      */
     public function export(UserScore $player)

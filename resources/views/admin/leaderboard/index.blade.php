@@ -80,7 +80,7 @@
                         @if(isset($guilds) && $guilds->count() > 0)
                             @foreach($guilds as $guild)
                                 <option value="{{ $guild->guild_id }}" {{ request('guild_id') == $guild->guild_id ? 'selected' : '' }}>
-                                    Serveur {{ substr($guild->guild_id, 0, 8) }}... ({{ $guild->players_count }} joueurs)
+                                    {{ substr(getGuildName($guild->guild_id), 0, 8) }}... ({{ $guild->players_count }} joueurs)
                                 </option>
                             @endforeach
                         @endif
@@ -181,7 +181,12 @@
                                             <div>
                                                 <div class="fw-medium">{{ $player->username ?? 'Joueur inconnu' }}</div>
                                                 @if($player->guild_id)
-                                                    <small class="text-muted">{{ substr($player->guild_id, 0, 8) }}...</small>
+                                                <small class="text-muted">
+                                                    @php
+                                                        $guildName = getGuildName($player->guild_id);
+                                                    @endphp
+                                                    {{ strlen($guildName) > 15 ? substr($guildName, 0, 15) . '...' : $guildName }}
+                                                </small>
                                                 @endif
                                             </div>
                                         </div>

@@ -148,7 +148,7 @@
                         <option value="">Tous les joueurs</option>
                         @foreach($users as $user)
                             <option value="{{ $user->user_id }}" {{ request('user_id') == $user->user_id ? 'selected' : '' }}>
-                                {{ $user->username }}
+                                {{ $user->username }} | {{ getGuildName($user->guild_id) }}
                             </option>
                         @endforeach
                     </select>
@@ -184,7 +184,7 @@
                         <option value="">Tous</option>
                         @foreach($guilds as $guild)
                             <option value="{{ $guild->guild_id }}" {{ request('guild_id') === $guild->guild_id ? 'selected' : '' }}>
-                                {{ $guild->guild_id }}
+                                {{ getGuildName($guild->guild_id) }}
                             </option>
                         @endforeach
                     </select>
@@ -215,14 +215,23 @@
                 </h5>
                 <div class="d-flex gap-2">
                     <div class="dropdown">
-                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown">
                             <i class="bi bi-sort-down"></i> Trier par
                         </button>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ request()->fullUrlWithQuery(['sort' => 'found_at', 'direction' => 'desc']) }}">Plus récent</a></li>
-                            <li><a class="dropdown-item" href="{{ request()->fullUrlWithQuery(['sort' => 'found_at', 'direction' => 'asc']) }}">Plus ancien</a></li>
-                            <li><a class="dropdown-item" href="{{ request()->fullUrlWithQuery(['sort' => 'attempts_used', 'direction' => 'asc']) }}">Moins de tentatives</a></li>
-                            <li><a class="dropdown-item" href="{{ request()->fullUrlWithQuery(['sort' => 'attempts_used', 'direction' => 'desc']) }}">Plus de tentatives</a></li>
+                            <li><a class="dropdown-item"
+                                    href="{{ request()->fullUrlWithQuery(['sort' => 'found_at', 'direction' => 'desc']) }}">Plus
+                                    récent</a></li>
+                            <li><a class="dropdown-item"
+                                    href="{{ request()->fullUrlWithQuery(['sort' => 'found_at', 'direction' => 'asc']) }}">Plus
+                                    ancien</a></li>
+                            <li><a class="dropdown-item"
+                                    href="{{ request()->fullUrlWithQuery(['sort' => 'attempts_used', 'direction' => 'asc']) }}">Moins
+                                    de tentatives</a></li>
+                            <li><a class="dropdown-item"
+                                    href="{{ request()->fullUrlWithQuery(['sort' => 'attempts_used', 'direction' => 'desc']) }}">Plus
+                                    de tentatives</a></li>
                         </ul>
                     </div>
                 </div>
@@ -255,10 +264,18 @@
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2"
-                                             style="width: 32px; height: 32px; font-size: 0.875rem;">
+                                            style="width: 32px; height: 32px; font-size: 0.875rem;">
                                             {{ strtoupper(substr($carFound->userScore->username ?? 'U', 0, 1)) }}
                                         </div>
-                                        <span>{{ $carFound->userScore->username ?? 'Utilisateur inconnu' }}</span>
+                                        <div>
+                                            <span>{{ $carFound->userScore->username ?? 'Utilisateur inconnu' }}</span></br>
+                                            <small class="text-muted">
+                                                @php
+                                                    $guildName = getGuildName($carFound->userScore->guild_id);
+                                                @endphp
+                                                {{ strlen($guildName) > 15 ? substr($guildName, 0, 15) . '...' : $guildName }}
+                                            </small>
+                                        </div>
                                     </div>
                                 </td>
                                 <td>
@@ -266,7 +283,8 @@
                                         <div class="fw-medium">{{ $carFound->carModel->name ?? 'N/A' }}</div>
                                         <div class="small text-muted">
                                             {{ $carFound->carModel->year ?? 'N/A' }} •
-                                            <span class="badge {{ $carFound->carModel->difficulty_level <= 2 ? 'bg-success' : ($carFound->carModel->difficulty_level <= 3 ? 'bg-warning' : 'bg-danger') }}">
+                                            <span
+                                                class="badge {{ $carFound->carModel->difficulty_level <= 2 ? 'bg-success' : ($carFound->carModel->difficulty_level <= 3 ? 'bg-warning' : 'bg-danger') }}">
                                                 Niveau {{ $carFound->carModel->difficulty_level ?? 'N/A' }}
                                             </span>
                                         </div>
@@ -277,7 +295,8 @@
                                         <span class="me-2">{{ $carFound->carModel->brand->country_flag ?? '🌍' }}</span>
                                         <div>
                                             <div class="fw-medium">{{ $carFound->carModel->brand->name ?? 'N/A' }}</div>
-                                            <div class="small text-muted">{{ $carFound->carModel->brand->country ?? 'N/A' }}</div>
+                                            <div class="small text-muted">{{ $carFound->carModel->brand->country ?? 'N/A' }}
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
@@ -286,7 +305,8 @@
                                     <div class="small text-muted">{{ $carFound->found_at->format('H:i') }}</div>
                                 </td>
                                 <td>
-                                    <span class="badge {{ $carFound->attempts_used <= 3 ? 'bg-success' : ($carFound->attempts_used <= 5 ? 'bg-warning' : 'bg-danger') }}">
+                                    <span
+                                        class="badge {{ $carFound->attempts_used <= 3 ? 'bg-success' : ($carFound->attempts_used <= 5 ? 'bg-warning' : 'bg-danger') }}">
                                         {{ $carFound->attempts_used }}
                                     </span>
                                 </td>
@@ -299,12 +319,13 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <a href="{{ route('admin.cars-found.show', $carFound->id) }}" 
-                                           class="btn btn-outline-primary" title="Voir détails">
+                                        <a href="{{ route('admin.cars-found.show', $carFound->id) }}"
+                                            class="btn btn-outline-primary" title="Voir détails">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <form method="POST" action="{{ route('admin.cars-found.destroy', $carFound->id) }}" 
-                                              class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette entrée ?')">>
+                                        <form method="POST" action="{{ route('admin.cars-found.destroy', $carFound->id) }}"
+                                            class="d-inline"
+                                            onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette entrée ?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-outline-danger" title="Supprimer">
@@ -347,7 +368,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Êtes-vous sûr de vouloir supprimer les <span id="selectedCount">0</span> entrée(s) sélectionnée(s) ?</p>
+                    <p>Êtes-vous sûr de vouloir supprimer les <span id="selectedCount">0</span> entrée(s)
+                        sélectionnée(s) ?</p>
                     <p class="text-danger small">Cette action est irréversible.</p>
                 </div>
                 <div class="modal-footer">
@@ -363,63 +385,63 @@
     </div>
 
     @push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const selectAllCheckbox = document.getElementById('selectAll');
-            const rowCheckboxes = document.querySelectorAll('.row-checkbox');
-            const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
-            
-            // Sélectionner/désélectionner tout
-            selectAllCheckbox.addEventListener('change', function() {
-                rowCheckboxes.forEach(checkbox => {
-                    checkbox.checked = this.checked;
-                });
-                updateBulkDeleteButton();
-            });
-            
-            // Gérer la sélection individuelle
-            rowCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    updateSelectAllCheckbox();
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const selectAllCheckbox = document.getElementById('selectAll');
+                const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+                const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+
+                // Sélectionner/désélectionner tout
+                selectAllCheckbox.addEventListener('change', function () {
+                    rowCheckboxes.forEach(checkbox => {
+                        checkbox.checked = this.checked;
+                    });
                     updateBulkDeleteButton();
                 });
-            });
-            
-            function updateSelectAllCheckbox() {
-                const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
-                selectAllCheckbox.checked = checkedCount === rowCheckboxes.length;
-                selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < rowCheckboxes.length;
-            }
-            
-            function updateBulkDeleteButton() {
-                const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
-                const selectedCount = checkedBoxes.length;
-                
-                if (selectedCount > 0) {
-                    if (!document.getElementById('bulkDeleteBtn')) {
-                        const actionDiv = document.querySelector('.card-header .d-flex');
-                        const button = document.createElement('button');
-                        button.id = 'bulkDeleteBtn';
-                        button.className = 'btn btn-danger btn-sm';
-                        button.innerHTML = '<i class="bi bi-trash"></i> Supprimer la sélection';
-                        button.setAttribute('data-bs-toggle', 'modal');
-                        button.setAttribute('data-bs-target', '#bulkDeleteModal');
-                        actionDiv.appendChild(button);
-                        
-                        button.addEventListener('click', function() {
-                            const selectedIds = Array.from(checkedBoxes).map(cb => cb.value);
-                            document.getElementById('selectedCount').textContent = selectedCount;
-                            document.getElementById('selectedIds').value = JSON.stringify(selectedIds);
-                        });
-                    }
-                } else {
-                    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
-                    if (bulkDeleteBtn) {
-                        bulkDeleteBtn.remove();
+
+                // Gérer la sélection individuelle
+                rowCheckboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', function () {
+                        updateSelectAllCheckbox();
+                        updateBulkDeleteButton();
+                    });
+                });
+
+                function updateSelectAllCheckbox() {
+                    const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
+                    selectAllCheckbox.checked = checkedCount === rowCheckboxes.length;
+                    selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < rowCheckboxes.length;
+                }
+
+                function updateBulkDeleteButton() {
+                    const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+                    const selectedCount = checkedBoxes.length;
+
+                    if (selectedCount > 0) {
+                        if (!document.getElementById('bulkDeleteBtn')) {
+                            const actionDiv = document.querySelector('.card-header .d-flex');
+                            const button = document.createElement('button');
+                            button.id = 'bulkDeleteBtn';
+                            button.className = 'btn btn-danger btn-sm';
+                            button.innerHTML = '<i class="bi bi-trash"></i> Supprimer la sélection';
+                            button.setAttribute('data-bs-toggle', 'modal');
+                            button.setAttribute('data-bs-target', '#bulkDeleteModal');
+                            actionDiv.appendChild(button);
+
+                            button.addEventListener('click', function () {
+                                const selectedIds = Array.from(checkedBoxes).map(cb => cb.value);
+                                document.getElementById('selectedCount').textContent = selectedCount;
+                                document.getElementById('selectedIds').value = JSON.stringify(selectedIds);
+                            });
+                        }
+                    } else {
+                        const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+                        if (bulkDeleteBtn) {
+                            bulkDeleteBtn.remove();
+                        }
                     }
                 }
-            }
-        });
-    </script>
+            });
+        </script>
     @endpush
 </x-admin-layout>
