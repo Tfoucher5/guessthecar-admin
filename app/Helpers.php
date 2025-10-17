@@ -1,5 +1,5 @@
 <?php
-// Créer le fichier app/helpers.php
+// Fichier renommé
 
 if (!function_exists('getGuildName')) {
     /**
