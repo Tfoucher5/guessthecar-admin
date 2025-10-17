@@ -55,7 +55,7 @@ class DashboardController extends Controller
                 brands.logo_url,
                 COUNT(game_sessions.id) as sessions_count
             ')
-            ->leftJoin('models', 'brands.id', '=', 'models.brand_id')  // CORRIGÉ: models au lieu de car_models
+            ->leftJoin('models', 'brands.id', '=', 'models.brand_id')
             ->leftJoin('game_sessions', 'models.id', '=', 'game_sessions.car_id')
             ->groupBy('brands.id', 'brands.name', 'brands.logo_url')
             ->orderBy('sessions_count', 'desc')
@@ -68,13 +68,13 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        // Statistiques par mois (6 derniers mois)
-        $monthlyStats = GameSession::selectRaw('
-                DATE_FORMAT(started_at, "%Y-%m") as month,
+        // Statistiques par mois (6 derniers mois) - CORRIGÉ pour PostgreSQL
+        $monthlyStats = GameSession::selectRaw("
+                TO_CHAR(started_at, 'YYYY-MM') as month,
                 COUNT(*) as sessions_count,
                 COUNT(DISTINCT user_id) as unique_players,
-                SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END) as completed_sessions
-            ')
+                SUM(CASE WHEN completed = true THEN 1 ELSE 0 END) as completed_sessions
+            ")
             ->where('started_at', '>=', now()->subMonths(6))
             ->groupBy('month')
             ->orderBy('month')
@@ -201,7 +201,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Récupérer les sessions par heure pour le graphique
+     * Récupérer les sessions par heure pour le graphique - CORRIGÉ pour PostgreSQL
      */
     private function getSessionsByHour()
     {
@@ -210,17 +210,17 @@ class DashboardController extends Controller
             $data[$i] = 0;
         }
 
-        $sessions = GameSession::selectRaw('
-                HOUR(started_at) as hour,
+        $sessions = GameSession::selectRaw("
+                EXTRACT(HOUR FROM started_at) as hour,
                 COUNT(*) as count
-            ')
+            ")
             ->whereDate('started_at', today())
             ->groupBy('hour')
             ->orderBy('hour')
             ->get();
 
         foreach ($sessions as $session) {
-            $data[$session->hour] = $session->count;
+            $data[(int)$session->hour] = $session->count;
         }
 
         return $data;
