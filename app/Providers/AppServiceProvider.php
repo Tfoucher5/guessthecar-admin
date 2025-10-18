@@ -19,6 +19,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Http::macro('discord', function () {
+            return \Http::withOptions([
+                'verify' => base_path('storage/cacert.pem'),
+            ]);
+        });
+
             if ($this->app->environment('production')) {
         \URL::forceScheme('https');
     }

@@ -37,7 +37,7 @@ if (!function_exists('getGuildName')) {
                 return $fallback;
             }
 
-            $response = \Http::timeout(3)->withHeaders([
+            $response = \Http::discord()->timeout(3)->withHeaders([
                 'Authorization' => 'Bot ' . $botToken,
                 'Content-Type' => 'application/json',
             ])->get("https://discord.com/api/v10/guilds/{$guildId}");

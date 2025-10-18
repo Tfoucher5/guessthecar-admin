@@ -1,43 +1,147 @@
 /* ====================================
    FEUILLE DE STYLE PRINCIPALE
    CarGuesser - Administration
+   Ultra Modern Dark Theme
    ==================================== */
 
-/* 1. VARIABLES CUSTOM */
+/* 1. VARIABLES CUSTOM - DARK THEME */
 :root {
-    --primary-color: #0d6efd;
-    --secondary-color: #6c757d;
-    --success-color: #198754;
-    --danger-color: #dc3545;
-    --warning-color: #ffc107;
-    --info-color: #0dcaf0;
-    --light-color: #f8f9fa;
-    --dark-color: #212529;
-
-    --border-radius: 8px;
-    --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    --transition: all 0.3s ease;
+    /* Couleurs principales */
+    --primary-color: #8b5cf6;
+    --primary-dark: #7c3aed;
+    --primary-light: #a78bfa;
+    --secondary-color: #ec4899;
+    --accent-color: #3b82f6;
+    
+    /* Couleurs de statut */
+    --success-color: #10b981;
+    --danger-color: #ef4444;
+    --warning-color: #f59e0b;
+    --info-color: #06b6d4;
+    
+    /* Couleurs dark theme */
+    --dark-bg: #0a0a0f;
+    --dark-card: #111117;
+    --dark-card-hover: #1a1a24;
+    --dark-border: rgba(139, 92, 246, 0.2);
+    --dark-overlay: rgba(17, 17, 23, 0.8);
+    
+    /* Texte */
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --text-muted: rgba(255, 255, 255, 0.5);
+    --text-disabled: rgba(255, 255, 255, 0.3);
+    
+    /* Layout */
+    --border-radius: 12px;
+    --border-radius-sm: 8px;
+    --border-radius-lg: 16px;
+    --border-radius-xl: 20px;
+    
+    /* Ombres */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.3);
+    --shadow-glow-hover: 0 0 30px rgba(139, 92, 246, 0.5);
+    
+    /* Transitions */
+    --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Spacing */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
 }
 
 /* 2. RESET ET BASE */
 * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
-    color: var(--dark-color);
-    background-color: #f8f9fa;
+    color: var(--text-primary);
+    background: var(--dark-bg);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Background animé global */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at top left, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom right, rgba(236, 72, 153, 0.15) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -2;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: gridMove 20s linear infinite;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes gridMove {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(50px, 50px); }
+}
+
+/* Scrollbar personnalisée */
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(17, 17, 23, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, var(--primary-dark), var(--secondary-color));
 }
 
 /* 3. CONTENEURS D'IMAGES - STYLES DE BASE */
 .img-container {
     position: relative;
     overflow: hidden;
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
+    background: var(--dark-card);
+    border: 1px solid var(--dark-border);
     border-radius: var(--border-radius);
+    transition: var(--transition-base);
+}
+
+.img-container:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-glow);
 }
 
 .img-responsive {
@@ -45,21 +149,47 @@ body {
     height: auto;
     display: block;
     object-fit: cover;
-    transition: var(--transition);
+    transition: var(--transition-base);
+}
+
+.img-container:hover .img-responsive {
+    transform: scale(1.05);
 }
 
 /* 4. IMAGES DANS LES TABLEAUX */
 .img-table-container {
     width: 60px;
     height: 60px;
-    border-radius: 6px;
+    border-radius: var(--border-radius-sm);
     overflow: hidden;
     flex-shrink: 0;
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
+    background: var(--dark-card);
+    border: 1px solid var(--dark-border);
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: var(--transition-base);
+    position: relative;
+}
+
+.img-table-container::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: var(--border-radius-sm);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+}
+
+.img-table-container:hover::before {
+    opacity: 1;
+}
+
+.img-table-container:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-glow);
 }
 
 .img-table {
@@ -73,12 +203,12 @@ body {
 .img-table-fallback {
     width: 100%;
     height: 100%;
-    background-color: #e9ecef;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1));
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #6c757d;
-    font-size: 1.2rem;
+    color: var(--text-muted);
+    font-size: 1.5rem;
 }
 
 /* 5. IMAGES CIRCULAIRES (AVATARS) */
@@ -87,8 +217,20 @@ body {
     height: 100px !important;
     border-radius: 50% !important;
     object-fit: cover;
-    border: 3px solid #fff;
-    box-shadow: var(--box-shadow);
+    border: 3px solid var(--primary-color);
+    box-shadow: var(--shadow-glow);
+    transition: var(--transition-base);
+    animation: float 3s ease-in-out infinite;
+}
+
+.img-circle:hover {
+    transform: scale(1.05) rotate(5deg);
+    box-shadow: var(--shadow-glow-hover);
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
 }
 
 .img-circle-sm {
@@ -96,6 +238,8 @@ body {
     height: 40px !important;
     border-radius: 50% !important;
     object-fit: cover;
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 
 .img-circle-lg {
@@ -103,8 +247,8 @@ body {
     height: 120px !important;
     border-radius: 50% !important;
     object-fit: cover;
-    border: 4px solid #fff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    border: 4px solid var(--primary-color);
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
 }
 
 /* 6. IMAGES DANS LES CARTES */
@@ -114,17 +258,32 @@ body {
     height: 200px;
     overflow: hidden;
     border-radius: var(--border-radius) var(--border-radius) 0 0;
+    background: var(--dark-card);
 }
 
 .card-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.card-img:hover {
-    transform: scale(1.05);
+.card-img-container:hover .card-img {
+    transform: scale(1.15) rotate(2deg);
+}
+
+/* Overlay sur les images de carte */
+.card-img-container::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 0%, rgba(10, 10, 15, 0.7) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.card-img-container:hover::after {
+    opacity: 1;
 }
 
 /* 7. LOGOS DE MARQUES */
@@ -132,35 +291,59 @@ body {
     max-width: 80px;
     max-height: 60px;
     object-fit: contain;
-    padding: 5px;
-    background-color: #fff;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
+    padding: 8px;
+    background: var(--dark-card);
+    border: 1px solid var(--dark-border);
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-base);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.brand-logo:hover {
+    transform: translateY(-4px) scale(1.05);
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-glow);
 }
 
 .brand-logo-sm {
     max-width: 40px;
     max-height: 30px;
     object-fit: contain;
+    padding: 4px;
 }
 
 .brand-logo-lg {
     max-width: 120px;
     max-height: 90px;
     object-fit: contain;
-    padding: 10px;
+    padding: 12px;
 }
 
 /* 8. IMAGES DE VOITURES */
 .car-image {
     border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    transition: var(--transition);
+    box-shadow: var(--shadow-lg);
+    transition: var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+
+.car-image::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(45deg, transparent, rgba(139, 92, 246, 0.1), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.car-image:hover::before {
+    transform: translateX(100%);
 }
 
 .car-image:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(139, 92, 246, 0.4);
+    transform: translateY(-8px);
 }
 
 .car-image-grid {
@@ -175,8 +358,16 @@ body {
     width: 40px;
     height: 40px;
     object-fit: cover;
-    border-radius: 6px;
+    border-radius: var(--border-radius-sm);
     flex-shrink: 0;
+    border: 2px solid var(--dark-border);
+    transition: var(--transition-base);
+}
+
+.dashboard-img:hover {
+    transform: scale(1.15) rotate(-5deg);
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-glow);
 }
 
 /* Images dans les sessions */
@@ -184,43 +375,72 @@ body {
     width: 24px;
     height: 24px;
     object-fit: cover;
-    border-radius: 4px;
-    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    border: 1px solid var(--dark-border);
+    transition: var(--transition-fast);
+}
+
+.session-car-image:hover {
+    transform: scale(1.2);
+    border-color: var(--primary-color);
 }
 
 /* 10. GESTION DES ERREURS D'IMAGES */
 .img-error {
-    background-color: #f8f9fa;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1));
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #6c757d;
+    color: var(--text-muted);
     font-size: 1.5rem;
-    border: 2px dashed #dee2e6;
+    border: 2px dashed var(--dark-border);
+    border-radius: var(--border-radius);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
 }
 
 .img-placeholder {
-    background-color: #e9ecef;
+    background: linear-gradient(135deg, var(--dark-card), var(--dark-card-hover));
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #6c757d;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
 /* 11. PRÉVISUALISATIONS */
 .preview-container {
-    background-color: #f8f9fa;
-    border: 2px dashed #dee2e6;
+    background: var(--dark-card);
+    border: 2px dashed var(--dark-border);
     border-radius: var(--border-radius);
-    padding: 20px;
+    padding: 2rem;
     text-align: center;
-    transition: var(--transition);
+    transition: var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+
+.preview-container::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .preview-container:hover {
     border-color: var(--primary-color);
-    background-color: rgba(13, 110, 253, 0.05);
+    background: rgba(139, 92, 246, 0.05);
+    box-shadow: var(--shadow-glow);
+}
+
+.preview-container:hover::before {
+    opacity: 1;
 }
 
 .preview-image {
@@ -228,7 +448,7 @@ body {
     max-height: 200px;
     object-fit: contain;
     border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
+    box-shadow: var(--shadow-md);
 }
 
 /* 12. MEDIA QUERIES POUR RESPONSIVE */
@@ -257,6 +477,10 @@ body {
         max-width: 60px;
         max-height: 45px;
     }
+
+    .card-img-container {
+        height: 180px;
+    }
 }
 
 @media (max-width: 576px) {
@@ -273,20 +497,27 @@ body {
         max-width: 50px;
         max-height: 35px;
     }
+
+    .preview-container {
+        padding: 1.5rem;
+    }
 }
 
 /* 13. ANIMATIONS POUR LE CHARGEMENT */
 .img-loading {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background: linear-gradient(90deg, 
+        rgba(139, 92, 246, 0.1) 25%, 
+        rgba(236, 72, 153, 0.1) 50%, 
+        rgba(139, 92, 246, 0.1) 75%);
     background-size: 200% 100%;
-    animation: loading 1.5s infinite;
+    animation: shimmer 2s infinite;
+    border-radius: var(--border-radius);
 }
 
-@keyframes loading {
+@keyframes shimmer {
     0% {
         background-position: 200% 0;
     }
-
     100% {
         background-position: -200% 0;
     }
@@ -294,41 +525,73 @@ body {
 
 /* 14. EFFETS ET INTERACTIONS */
 .img-hover-effect {
-    transition: var(--transition);
+    transition: var(--transition-base);
     cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.img-hover-effect::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(45deg, transparent, rgba(139, 92, 246, 0.3), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.img-hover-effect:hover::after {
+    transform: translateX(100%);
 }
 
 .img-hover-effect:hover {
-    opacity: 0.8;
-    transform: scale(1.02);
+    transform: scale(1.03);
+    box-shadow: var(--shadow-glow-hover);
 }
 
 .img-zoom {
-    transition: transform 0.3s ease;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: zoom-in;
 }
 
 .img-zoom:hover {
-    transform: scale(1.1);
+    transform: scale(1.15);
 }
 
 /* 15. BORDURES ET OMBRES */
 .img-styled {
-    border: 1px solid #dee2e6;
-    box-shadow: var(--box-shadow);
-    transition: var(--transition);
+    border: 1px solid var(--dark-border);
+    box-shadow: var(--shadow-md);
+    transition: var(--transition-base);
+    position: relative;
+}
+
+.img-styled::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+}
+
+.img-styled:hover::before {
+    opacity: 1;
 }
 
 .img-styled:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    transform: translateY(-1px);
+    box-shadow: var(--shadow-glow-hover);
+    transform: translateY(-4px);
 }
 
 .img-shadow {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-sm);
 }
 
 .img-shadow-lg {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-lg);
 }
 
 /* 16. CLASSES UTILITAIRES CUSTOM */
@@ -372,20 +635,36 @@ body {
 .img-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 1rem;
+    gap: 1.5rem;
 }
 
 .img-grid-item {
     position: relative;
     overflow: hidden;
     border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    transition: var(--transition);
+    box-shadow: var(--shadow-md);
+    transition: var(--transition-base);
+    border: 1px solid var(--dark-border);
+}
+
+.img-grid-item::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: var(--border-radius);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+}
+
+.img-grid-item:hover::before {
+    opacity: 1;
 }
 
 .img-grid-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: var(--shadow-glow-hover);
 }
 
 /* 18. OVERLAYS ET BADGES */
@@ -395,13 +674,16 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(45deg, rgba(0, 0, 0, 0.5), transparent);
+    background: linear-gradient(135deg, 
+        rgba(139, 92, 246, 0.8), 
+        rgba(236, 72, 153, 0.8));
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.4s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
+    backdrop-filter: blur(10px);
 }
 
 .img-container:hover .img-overlay {
@@ -410,28 +692,49 @@ body {
 
 .img-badge {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 12px;
+    right: 12px;
     z-index: 10;
+    padding: 0.5rem 0.75rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: var(--border-radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    box-shadow: var(--shadow-md);
+    animation: badge-pulse 2s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
 }
 
 /* 19. FILTRES ET EFFETS */
 .img-grayscale {
-    filter: grayscale(100%);
-    transition: filter 0.3s ease;
+    filter: grayscale(100%) brightness(0.8);
+    transition: filter 0.4s ease;
 }
 
 .img-grayscale:hover {
-    filter: grayscale(0%);
+    filter: grayscale(0%) brightness(1);
 }
 
 .img-blur {
-    filter: blur(2px);
-    transition: filter 0.3s ease;
+    filter: blur(4px);
+    transition: filter 0.4s ease;
 }
 
 .img-blur:hover {
     filter: blur(0px);
+}
+
+.img-neon {
+    filter: drop-shadow(0 0 10px var(--primary-color));
+    transition: filter 0.3s ease;
+}
+
+.img-neon:hover {
+    filter: drop-shadow(0 0 20px var(--primary-color));
 }
 
 /* 20. ACCESSIBILITÉ */
@@ -443,33 +746,17 @@ body {
 .img-accessible:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.3);
 }
 
-/* 21. MODES SOMBRE (OPTIONNEL) */
-@media (prefers-color-scheme: dark) {
-    .img-container {
-        background-color: #343a40;
-        border-color: #495057;
-    }
-
-    .img-placeholder {
-        background-color: #495057;
-        color: #adb5bd;
-    }
-
-    .img-error {
-        background-color: #343a40;
-        border-color: #495057;
-        color: #adb5bd;
-    }
-}
-
-/* 22. ÉTATS DE CHARGEMENT AVANCÉS */
+/* 21. ÉTATS DE CHARGEMENT AVANCÉS */
 .skeleton-img {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background: linear-gradient(90deg, 
+        rgba(139, 92, 246, 0.1) 25%, 
+        rgba(236, 72, 153, 0.2) 50%, 
+        rgba(139, 92, 246, 0.1) 75%);
     background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
+    animation: skeleton-loading 2s infinite;
     border-radius: var(--border-radius);
 }
 
@@ -477,13 +764,12 @@ body {
     0% {
         background-position: 200% 0;
     }
-
     100% {
         background-position: -200% 0;
     }
 }
 
-/* 23. COMPOSANTS SPÉCIALISÉS */
+/* 22. COMPOSANTS SPÉCIALISÉS */
 /* Timeline d'activité */
 .timeline {
     position: relative;
@@ -495,8 +781,10 @@ body {
     left: 16px;
     top: 0;
     bottom: 0;
-    width: 2px;
-    background-color: #dee2e6;
+    width: 3px;
+    background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+    border-radius: 2px;
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
 }
 
 .timeline-item {
@@ -506,63 +794,125 @@ body {
 .timeline-marker {
     position: relative;
     z-index: 1;
+    width: 12px;
+    height: 12px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px var(--dark-bg), 0 0 15px var(--primary-color);
+    animation: marker-pulse 2s ease-in-out infinite;
+}
+
+@keyframes marker-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
 }
 
 /* Cartes de collection */
 .collection-card {
-    transition: var(--transition);
-    border: 1px solid #dee2e6;
+    transition: var(--transition-base);
+    border: 1px solid var(--dark-border);
     border-radius: var(--border-radius);
     overflow: hidden;
+    background: var(--dark-card);
+    position: relative;
+}
+
+.collection-card::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: var(--border-radius);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+}
+
+.collection-card:hover::before {
+    opacity: 1;
 }
 
 .collection-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-    border-color: var(--primary-color);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: var(--shadow-glow-hover);
 }
 
 .collection-card .card-img-top {
     height: 120px;
     object-fit: cover;
-    background-color: #f8f9fa;
+    background: var(--dark-card-hover);
+    transition: transform 0.5s ease;
+}
+
+.collection-card:hover .card-img-top {
+    transform: scale(1.1) rotate(2deg);
 }
 
 /* Stats cards */
 .stat-card {
-    background: linear-gradient(135deg, var(--primary-color), rgba(13, 110, 253, 0.8));
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     border: none;
     color: white;
     overflow: hidden;
     position: relative;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-glow);
+    animation: stat-glow 3s ease-in-out infinite;
+}
+
+@keyframes stat-glow {
+    0%, 100% { box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4); }
+    50% { box-shadow: 0 8px 32px rgba(236, 72, 153, 0.6); }
 }
 
 .stat-card::before {
     content: '';
     position: absolute;
-    top: 0;
-    right: 0;
-    width: 100px;
-    height: 100px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    transform: translate(30px, -30px);
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+    animation: stat-rotate 10s linear infinite;
 }
 
-/* 24. COMPOSANTS DE FORMULAIRE */
+@keyframes stat-rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 23. COMPOSANTS DE FORMULAIRE */
 .form-img-upload {
-    border: 2px dashed #dee2e6;
+    border: 2px dashed var(--dark-border);
     border-radius: var(--border-radius);
-    padding: 2rem;
+    padding: 2.5rem;
     text-align: center;
-    transition: var(--transition);
+    transition: var(--transition-base);
     cursor: pointer;
+    background: var(--dark-card);
+    position: relative;
+    overflow: hidden;
+}
+
+.form-img-upload::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.form-img-upload:hover::before,
+.form-img-upload.dragover::before {
+    opacity: 1;
 }
 
 .form-img-upload:hover,
 .form-img-upload.dragover {
     border-color: var(--primary-color);
-    background-color: rgba(13, 110, 253, 0.05);
+    background: rgba(139, 92, 246, 0.08);
+    box-shadow: var(--shadow-glow);
 }
 
 .form-img-preview {
@@ -570,18 +920,32 @@ body {
     max-height: 150px;
     object-fit: contain;
     border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
+    box-shadow: var(--shadow-md);
     margin: 1rem auto;
     display: block;
+    border: 2px solid var(--dark-border);
+    transition: var(--transition-base);
 }
 
-/* 25. TABLEAUX RESPONSIVES */
+.form-img-preview:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-glow);
+}
+
+/* 24. TABLEAUX RESPONSIVES */
 .table-img {
     width: 50px;
     height: 50px;
     object-fit: cover;
-    border-radius: 4px;
-    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    border: 2px solid var(--dark-border);
+    transition: var(--transition-base);
+}
+
+.table-img:hover {
+    transform: scale(1.15) rotate(-3deg);
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-glow);
 }
 
 @media (max-width: 768px) {
@@ -591,34 +955,55 @@ body {
     }
 }
 
-/* 26. BADGES ET INDICATEURS */
+/* 25. BADGES ET INDICATEURS */
 .img-status-badge {
     position: absolute;
-    bottom: 4px;
-    right: 4px;
-    width: 12px;
-    height: 12px;
+    bottom: 6px;
+    right: 6px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
-    border: 2px solid white;
+    border: 3px solid var(--dark-bg);
+    box-shadow: 0 0 10px currentColor;
 }
 
 .img-status-badge.online {
     background-color: var(--success-color);
+    animation: status-pulse-green 2s ease-in-out infinite;
 }
 
 .img-status-badge.offline {
-    background-color: var(--secondary-color);
+    background-color: var(--text-muted);
 }
 
 .img-status-badge.away {
     background-color: var(--warning-color);
+    animation: status-pulse-orange 2s ease-in-out infinite;
 }
 
-/* 27. GALERIES ET LIGHTBOX */
+@keyframes status-pulse-green {
+    0%, 100% { 
+        box-shadow: 0 0 10px var(--success-color);
+    }
+    50% { 
+        box-shadow: 0 0 20px var(--success-color);
+    }
+}
+
+@keyframes status-pulse-orange {
+    0%, 100% { 
+        box-shadow: 0 0 10px var(--warning-color);
+    }
+    50% { 
+        box-shadow: 0 0 20px var(--warning-color);
+    }
+}
+
+/* 26. GALERIES ET LIGHTBOX */
 .gallery-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
+    gap: 1.5rem;
     margin: 2rem 0;
 }
 
@@ -627,59 +1012,101 @@ body {
     overflow: hidden;
     border-radius: var(--border-radius);
     cursor: pointer;
-    transition: var(--transition);
+    transition: var(--transition-base);
+    border: 1px solid var(--dark-border);
+    background: var(--dark-card);
+}
+
+.gallery-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, 
+        rgba(139, 92, 246, 0.4), 
+        rgba(236, 72, 153, 0.4));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1;
+}
+
+.gallery-item:hover::before {
+    opacity: 1;
 }
 
 .gallery-item:hover {
-    transform: scale(1.02);
+    transform: scale(1.03);
+    box-shadow: var(--shadow-glow-hover);
 }
 
 .gallery-item img {
     width: 100%;
     height: 200px;
     object-fit: cover;
-    transition: var(--transition);
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .gallery-item:hover img {
-    transform: scale(1.1);
+    transform: scale(1.15);
 }
 
-/* 28. NAVIGATION ET MENUS */
+/* 27. NAVIGATION ET MENUS */
 .nav-avatar {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     object-fit: cover;
     border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    transition: var(--transition-base);
+}
+
+.nav-avatar:hover {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 6px 16px rgba(139, 92, 246, 0.5);
 }
 
 .sidebar-brand-img {
-    max-height: 40px;
+    max-height: 45px;
     object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(139, 92, 246, 0.3));
+    transition: var(--transition-base);
 }
 
-/* 29. ALERTES ET NOTIFICATIONS */
+.sidebar-brand-img:hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0 6px 12px rgba(139, 92, 246, 0.5));
+}
+
+/* 28. ALERTES ET NOTIFICATIONS */
 .alert-img {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     object-fit: cover;
     border-radius: 50%;
-    margin-right: 0.75rem;
+    margin-right: 1rem;
     flex-shrink: 0;
+    border: 2px solid var(--dark-border);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-base);
 }
 
-/* 30. CORRECTIONS SPÉCIFIQUES */
+.alert-img:hover {
+    transform: scale(1.1);
+    border-color: var(--primary-color);
+}
+
+/* 29. CORRECTIONS SPÉCIFIQUES */
 /* Correction pour les bordures dans les previews */
 .preview-container img {
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
+    border: 1px solid var(--dark-border);
+    border-radius: var(--border-radius-sm);
 }
 
 /* Correction pour les images manquantes */
 img[src=""],
 img:not([src]) {
     opacity: 0;
+    display: none;
 }
 
 /* Correction pour les conteneurs flexibles */
@@ -696,7 +1123,7 @@ img:not([src]) {
     border-radius: 0 0 var(--border-radius) var(--border-radius);
 }
 
-/* 31. UTILITAIRES FINAUX */
+/* 30. UTILITAIRES FINAUX */
 .img-fit-cover {
     object-fit: cover !important;
 }
@@ -733,14 +1160,436 @@ img:not([src]) {
     object-position: right !important;
 }
 
-/* Classes pour débugger */
+/* 31. EFFETS AVANCÉS */
+/* Effet glitch sur les images */
+.img-glitch {
+    position: relative;
+}
+
+.img-glitch:hover::before,
+.img-glitch:hover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: inherit;
+    mix-blend-mode: screen;
+}
+
+.img-glitch:hover::before {
+    animation: glitch-1 0.3s infinite;
+}
+
+.img-glitch:hover::after {
+    animation: glitch-2 0.3s infinite;
+}
+
+@keyframes glitch-1 {
+    0%, 100% { transform: translate(0); }
+    33% { transform: translate(-2px, 2px); }
+    66% { transform: translate(2px, -2px); }
+}
+
+@keyframes glitch-2 {
+    0%, 100% { transform: translate(0); }
+    33% { transform: translate(2px, -2px); }
+    66% { transform: translate(-2px, 2px); }
+}
+
+/* Effet de scan */
+.img-scan {
+    position: relative;
+    overflow: hidden;
+}
+
+.img-scan::after {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, 
+        transparent, 
+        rgba(139, 92, 246, 0.3), 
+        transparent);
+    animation: scan 3s ease-in-out infinite;
+}
+
+@keyframes scan {
+    0% { top: -100%; }
+    50% { top: 100%; }
+    100% { top: 100%; }
+}
+
+/* Effet holographique */
+.img-hologram {
+    position: relative;
+    overflow: hidden;
+}
+
+.img-hologram::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(45deg, 
+        rgba(139, 92, 246, 0.2) 0%,
+        rgba(236, 72, 153, 0.2) 25%,
+        rgba(59, 130, 246, 0.2) 50%,
+        rgba(236, 72, 153, 0.2) 75%,
+        rgba(139, 92, 246, 0.2) 100%);
+    background-size: 200% 200%;
+    animation: hologram 3s ease infinite;
+    mix-blend-mode: overlay;
+}
+
+@keyframes hologram {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Effet parallaxe 3D */
+.img-parallax {
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease;
+}
+
+.img-parallax:hover {
+    transform: perspective(1000px) rotateX(5deg) rotateY(5deg);
+}
+
+/* 32. MODES SPÉCIAUX */
+/* Mode haute performance (réduit les animations) */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Mode contraste élevé */
+@media (prefers-contrast: high) {
+    .img-container,
+    .img-table-container,
+    .brand-logo {
+        border-width: 2px;
+        border-color: var(--text-primary);
+    }
+}
+
+/* 33. PRINT STYLES */
+@media print {
+    body::before,
+    body::after {
+        display: none;
+    }
+
+    .img-container,
+    .card-img-container {
+        break-inside: avoid;
+    }
+
+    .img-styled,
+    .brand-logo,
+    .car-image {
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+}
+
+/* 34. COMPOSANTS INTERACTIFS */
+/* Boutons avec images */
+.btn-img {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border: none;
+    border-radius: var(--border-radius);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-base);
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-img::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.5s ease;
+}
+
+.btn-img:hover::before {
+    transform: translateX(100%);
+}
+
+.btn-img:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow-hover);
+}
+
+.btn-img img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+/* Chips avec images */
+.chip-img {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--dark-card);
+    border: 1px solid var(--dark-border);
+    border-radius: 50px;
+    font-size: 0.875rem;
+    transition: var(--transition-base);
+}
+
+.chip-img:hover {
+    background: var(--dark-card-hover);
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-glow);
+}
+
+.chip-img img {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* 35. COMPOSANTS DE CAROUSEL */
+.carousel-img {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    transition: var(--transition-slow);
+}
+
+.carousel-item.active .carousel-img {
+    animation: carousel-zoom 0.8s ease-out;
+}
+
+@keyframes carousel-zoom {
+    0% {
+        transform: scale(1.2);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* 36. MODAL IMAGES */
+.modal-img {
+    width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    animation: modal-img-entry 0.4s ease-out;
+}
+
+@keyframes modal-img-entry {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* 37. TOOLTIPS SUR IMAGES */
+.img-tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.img-tooltip::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    padding: 0.5rem 1rem;
+    background: var(--dark-card);
+    border: 1px solid var(--dark-border);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    white-space: nowrap;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: var(--shadow-md);
+}
+
+.img-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid var(--dark-border);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.img-tooltip:hover::before,
+.img-tooltip:hover::after {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+}
+
+/* 38. CLASSES UTILITAIRES DE DEBUG */
 .debug-img {
-    border: 2px solid red !important;
+    border: 2px solid #ef4444 !important;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2) !important;
 }
 
 .debug-container {
-    background-color: rgba(255, 0, 0, 0.1) !important;
-    border: 1px dashed red !important;
+    background-color: rgba(239, 68, 68, 0.1) !important;
+    border: 2px dashed #ef4444 !important;
 }
 
-/* Fin du fichier CSS */
+.debug-info::after {
+    content: attr(data-debug);
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 0.25rem 0.5rem;
+    background: #ef4444;
+    color: white;
+    font-size: 0.75rem;
+    font-family: monospace;
+    z-index: 9999;
+}
+
+/* 39. PERFORMANCES ET OPTIMISATIONS */
+/* Lazy loading placeholder */
+.img-lazy {
+    background: linear-gradient(135deg, 
+        rgba(139, 92, 246, 0.1), 
+        rgba(236, 72, 153, 0.1));
+    animation: lazy-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes lazy-pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.8; }
+}
+
+/* WebP support fallback */
+@supports not (image-rendering: -webkit-optimize-contrast) {
+    img {
+        image-rendering: -moz-crisp-edges;
+        image-rendering: crisp-edges;
+    }
+}
+
+/* 40. ANIMATIONS FINALES */
+/* Rotation continue */
+.img-rotate {
+    animation: rotate-continuous 20s linear infinite;
+}
+
+@keyframes rotate-continuous {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Bounce effect */
+.img-bounce {
+    animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+/* Shake effect */
+.img-shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+/* Fade in effect */
+.img-fade-in {
+    animation: fade-in 0.8s ease-out;
+}
+
+@keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+/* Slide in effects */
+.img-slide-in-left {
+    animation: slide-in-left 0.6s ease-out;
+}
+
+@keyframes slide-in-left {
+    0% {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.img-slide-in-right {
+    animation: slide-in-right 0.6s ease-out;
+}
+
+@keyframes slide-in-right {
+    0% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* 41. THÈME CLAIR (OPTIONNEL) */
+@media (prefers-color-scheme: light) {
+    :root {
+        --dark-bg: #ffffff;
+        --dark-card: #f8f9fa;
+        --dark-card-hover: #e9ecef;
+        --dark-border: rgba(139, 92, 246, 0.2);
+        --text-primary: #1a1a1a;
+        --text-secondary: rgba(0, 0, 0, 0.7);
+        --text-muted: rgba(0, 0, 0, 0.5);
+    }
+}
+
+/* Fin du fichier CSS - CarGuesser Administration */
